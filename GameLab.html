@@ -1,0 +1,2749 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GameLab — Чат + Картинки + Звук + Видео + 2D/3D</title>
+<style>
+:root{
+  --accent:#39d98a;--accent-soft:rgba(57,217,138,.15);--accent-line:rgba(57,217,138,.4);
+  --accent-glow:rgba(57,217,138,.5);
+  --bg:#080b10;--bg2:#0d131a;--panel:#111923;--panel2:#16202b;
+  --border:#1e2b3a;--border2:#2a3b50;--text:#e6edf3;--muted:#7d90a5;
+  --danger:#ff6b6b;--warn:#ffc857;--r:12px;--fs:13px;
+}
+body.light{--bg:#eef2f7;--bg2:#e4eaf2;--panel:#fff;--panel2:#f3f6fa;
+  --border:#d3dce8;--border2:#bcc9da;--text:#16202b;--muted:#5f7189}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  display:flex;overflow:hidden;transition:background .3s,color .3s}
+body.no-anim *{transition:none!important;animation:none!important}
+#particles{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.55}
+body.light #particles{opacity:.25}
+.sidebar,main{position:relative;z-index:1}
+.ripple{position:absolute;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle,var(--accent-glow) 0%,transparent 70%);
+  width:20px;height:20px;transform:translate(-50%,-50%) scale(0);
+  animation:rippleAnim .7s ease-out forwards}
+@keyframes rippleAnim{to{transform:translate(-50%,-50%) scale(14);opacity:0}}
+.btn,.nav-btn,.card,.chip,.mode-btn,.quick,.sw,.model-item,.ai-tab,button{position:relative;overflow:hidden}
+
+@keyframes fadeInUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideInLeft{from{opacity:0;transform:translateX(-14px)}to{opacity:1;transform:none}}
+@keyframes slideInRight{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:none}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+@keyframes pulseGlow{0%,100%{box-shadow:0 0 0 0 var(--accent-glow)}50%{box-shadow:0 0 0 14px transparent}}
+@keyframes blinkCaret{0%,50%{opacity:1}51%,100%{opacity:0}}
+@keyframes typingDot{0%,60%,100%{opacity:.25;transform:translateY(0)}30%{opacity:1;transform:translateY(-5px)}}
+@keyframes pop{0%{transform:scale(0);opacity:0}70%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
+@keyframes welcomeOut{to{opacity:0;visibility:hidden;transform:scale(1.08)}}
+@keyframes gradientShift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+@keyframes thinkPulse{0%,100%{opacity:.35}50%{opacity:1}}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.splash{position:fixed;inset:0;z-index:9999;
+  background:radial-gradient(circle at 50% 40%,#0e1a26 0%,#05080c 75%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;
+  animation:fadeIn .4s ease}
+body.light .splash{background:radial-gradient(circle at 50% 40%,#e8f4ee 0%,#d3dde8 75%)}
+.splash.out{animation:welcomeOut .7s ease forwards}
+.splash-logo{width:120px;height:120px;border-radius:50%;
+  background:linear-gradient(135deg,var(--accent),#4dabf7);display:grid;place-items:center;
+  font-size:62px;box-shadow:0 0 60px var(--accent-glow),0 0 120px var(--accent-soft);
+  animation:float 2.6s ease-in-out infinite,pop .7s cubic-bezier(.2,1.4,.4,1)}
+.splash-name{font-size:38px;font-weight:800;letter-spacing:2px;
+  background:linear-gradient(90deg,var(--accent),#4dabf7,var(--accent));background-size:200% auto;
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  animation:gradientShift 3s linear infinite}
+.splash-tag{font-size:14.5px;color:var(--muted);letter-spacing:.5px;max-width:440px;
+  text-align:center;line-height:1.6;animation:fadeInUp .7s .3s backwards}
+.splash-dots{display:flex;gap:6px;margin-top:8px;animation:fadeInUp .7s .5s backwards}
+.splash-dots i{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:typingDot 1.3s infinite}
+.splash-dots i:nth-child(2){animation-delay:.15s}
+.splash-dots i:nth-child(3){animation-delay:.3s}
+
+.sidebar{width:220px;flex:0 0 220px;background:var(--panel);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;padding:14px 12px;gap:6px;
+  transition:width .25s cubic-bezier(.4,0,.2,1),flex-basis .25s cubic-bezier(.4,0,.2,1)}
+.sidebar.collapsed{width:66px;flex-basis:66px}
+.sidebar.collapsed .nav-label,.sidebar.collapsed .brand-text,.sidebar.collapsed .side-note{display:none}
+.brand{display:flex;align-items:center;gap:10px;padding:6px 8px 16px;font-weight:700;font-size:16px}
+.brand .logo{width:36px;height:36px;flex:0 0 36px;border-radius:10px;
+  background:linear-gradient(135deg,var(--accent),#4dabf7);display:grid;place-items:center;font-size:19px;
+  box-shadow:0 4px 20px var(--accent-glow)}
+.brand-text span{color:var(--accent)}
+.nav-btn{display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:10px;
+  background:transparent;border:1px solid transparent;color:var(--muted);cursor:pointer;
+  font:inherit;font-size:14px;text-align:left;transition:.2s;white-space:nowrap}
+.nav-btn .ico{font-size:17px;width:22px;text-align:center;flex:0 0 22px}
+.nav-btn:hover{background:var(--panel2);color:var(--text);transform:translateX(3px)}
+.nav-btn.active{background:var(--accent-soft);color:var(--accent);border-color:var(--accent-line);font-weight:600}
+.side-foot{margin-top:auto;display:flex;flex-direction:column;gap:8px}
+.side-note{font-size:11px;color:var(--muted);line-height:1.45;padding:0 8px}
+.collapse-btn{background:var(--panel2);border:1px solid var(--border);color:var(--muted);
+  border-radius:8px;padding:7px;cursor:pointer;font-size:13px}
+.collapse-btn:hover{color:var(--accent);border-color:var(--accent-line)}
+
+main{flex:1;min-width:0;display:flex;flex-direction:column;background:var(--bg2)}
+.view{flex:1;min-height:0;display:none;flex-direction:column}
+.view.active{display:flex;animation:fadeIn .35s ease}
+.topbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:11px 18px;
+  border-bottom:1px solid var(--border);background:var(--panel)}
+.topbar h2{margin:0;font-size:15px;font-weight:600}
+.topbar .sub{font-size:12px;color:var(--muted)}
+.spacer{flex:1}
+button,select,input[type=text],input[type=password],textarea{font-family:inherit}
+.btn{background:var(--panel2);color:var(--text);border:1px solid var(--border2);border-radius:9px;
+  padding:8px 14px;font-size:13px;cursor:pointer;white-space:nowrap;transition:.15s}
+.btn:hover{background:var(--border);border-color:var(--accent-line);transform:translateY(-1px)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#04140c;font-weight:700}
+.btn.primary:hover{filter:brightness(1.1);box-shadow:0 8px 24px var(--accent-glow)}
+.btn.ghost{background:transparent}
+.btn.sm{padding:5px 10px;font-size:12px}
+.btn.danger{color:var(--danger);border-color:rgba(255,107,107,.35)}
+.scroll{flex:1;overflow:auto;min-height:0}
+.scroll::-webkit-scrollbar{width:9px;height:9px}
+.scroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:6px}
+
+.cat-wrap{padding:18px}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.chip{padding:6px 13px;border-radius:20px;font-size:12.5px;cursor:pointer;
+  background:var(--panel2);border:1px solid var(--border);color:var(--muted);transition:.2s}
+.chip:hover{border-color:var(--border2);color:var(--text);transform:translateY(-2px)}
+.chip.active{background:var(--accent-soft);border-color:var(--accent-line);color:var(--accent);font-weight:600}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:var(--r);
+  padding:15px;display:flex;flex-direction:column;gap:9px;cursor:pointer;
+  transition:.25s;animation:fadeInUp .4s backwards}
+.card:hover{border-color:var(--accent-line);transform:translateY(-4px);
+  box-shadow:0 16px 40px rgba(0,0,0,.4)}
+.card .thumb{height:88px;border-radius:9px;display:grid;place-items:center;font-size:38px;
+  background:var(--panel2);border:1px solid var(--border)}
+.card h3{margin:0;font-size:15px;font-weight:600}
+.card p{margin:0;font-size:12.5px;color:var(--muted);line-height:1.5;flex:1}
+.card .meta{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.tag{font-size:10.5px;padding:3px 9px;border-radius:20px;background:var(--panel2);
+  border:1px solid var(--border);color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.tag.cat3d{color:#a78bfa;border-color:rgba(167,139,250,.4);
+  background:linear-gradient(135deg,rgba(167,139,250,.12),rgba(77,171,247,.12))}
+
+.editor-split{flex:1;display:flex;min-height:0}
+.ed-col{display:flex;flex-direction:column;min-width:0;width:45%;border-right:1px solid var(--border)}
+.pv-col{flex:1;display:flex;flex-direction:column;min-width:0}
+.pane-head{padding:7px 14px;font-size:11px;text-transform:uppercase;letter-spacing:1px;
+  color:var(--muted);background:var(--panel);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:8px}
+.pane-head .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);
+  box-shadow:0 0 10px var(--accent-glow)}
+.pane-head .mode3d{padding:2px 9px;border-radius:12px;font-size:10px;font-weight:700;
+  letter-spacing:.4px;border:1px solid var(--border2);color:var(--muted);cursor:pointer;user-select:none;
+  transition:.2s}
+.pane-head .mode3d.on{background:linear-gradient(135deg,rgba(167,139,250,.25),rgba(77,171,247,.25));
+  color:#a78bfa;border-color:rgba(167,139,250,.5);box-shadow:0 0 12px rgba(167,139,250,.25)}
+#code{flex:1;width:100%;resize:none;border:0;outline:0;padding:14px;background:var(--bg);
+  color:var(--text);font-family:"JetBrains Mono","Fira Code",Consolas,monospace;
+  font-size:var(--fs);line-height:1.6;tab-size:2;white-space:pre;overflow:auto}
+.stage{flex:1;position:relative;background:#05080b;min-height:0}
+body.light .stage{background:#dfe6ef}
+.stage.grid-bg{background-image:linear-gradient(var(--border) 1px,transparent 1px),
+  linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:28px 28px}
+.stage iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:#0b0f14}
+.ph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:8px;color:var(--muted);text-align:center;padding:20px;pointer-events:none}
+.ph .big{font-size:46px;opacity:.5;animation:float 3s ease-in-out infinite}
+.ph .txt{font-size:13.5px;max-width:330px;line-height:1.6}
+.statusbar{padding:7px 16px;font-size:12.5px;background:var(--panel);
+  border-top:1px solid var(--border);color:var(--muted);min-height:34px;
+  display:flex;align-items:center;gap:8px}
+.statusbar.ok{color:var(--accent)}
+.statusbar.error{color:var(--danger);background:rgba(255,107,107,.08)}
+
+.ai-layout{flex:1;display:flex;min-height:0}
+.ai-side{width:300px;flex:0 0 300px;border-right:1px solid var(--border);background:var(--panel);
+  padding:16px;display:flex;flex-direction:column;gap:14px;overflow:auto}
+.country-badge{padding:10px 12px;background:var(--panel2);border:1px solid var(--border);
+  border-radius:10px;font-size:12px;line-height:1.5;display:flex;align-items:center;gap:9px}
+.country-badge .flag{font-size:22px}
+.country-badge b{display:block;font-size:12.5px}
+.country-badge small{color:var(--muted);font-size:10.5px}
+.country-badge.ru{border-color:rgba(255,200,87,.4);background:rgba(255,200,87,.06)}
+.country-badge.ok{border-color:rgba(57,217,138,.4);background:rgba(57,217,138,.06)}
+
+.mode-title{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:7px}
+
+.model-item{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:11px;
+  margin-bottom:8px;background:var(--panel2);border:1px solid var(--border);
+  cursor:pointer;transition:.2s;position:relative}
+.model-item:hover{border-color:var(--border2);transform:translateX(3px)}
+.model-item.active{background:var(--accent-soft);border-color:var(--accent-line)}
+.model-item.active .mi-name{color:var(--accent)}
+.model-item.unavailable{opacity:.65}
+.model-item.unavailable::after{content:'⛔ РФ';position:absolute;right:10px;top:8px;
+  font-size:9px;color:#ff6b6b;font-weight:700;letter-spacing:.5px;
+  background:rgba(255,107,107,.15);padding:2px 6px;border-radius:8px}
+.model-item .mi-ico{width:34px;height:34px;flex:0 0 34px;border-radius:9px;display:grid;
+  place-items:center;font-size:17px;background:linear-gradient(135deg,var(--accent),#4dabf7)}
+.model-item .mi-info{flex:1;min-width:0}
+.model-item .mi-name{font-weight:600;font-size:13.5px;display:block;margin-bottom:2px}
+.model-item .mi-short{font-size:10.5px;color:var(--muted);display:block;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.model-item .badge{font-size:9px;padding:2px 7px;border-radius:10px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.5px;flex:0 0 auto}
+.model-item .badge.ru{background:rgba(57,217,138,.18);color:#39d98a;border:1px solid rgba(57,217,138,.35)}
+.model-item .badge.vpn{background:rgba(255,200,87,.18);color:#ffc857;border:1px solid rgba(255,200,87,.35)}
+.model-item .badge.free{background:linear-gradient(135deg,rgba(57,217,138,.25),rgba(77,171,247,.25));
+  color:#39d98a;border:1px solid rgba(57,217,138,.5)}
+
+.model-note{margin-top:8px;padding:9px 12px;border-radius:9px;
+  font-size:11.5px;line-height:1.5;border:1px solid var(--border);
+  background:var(--panel2);color:var(--muted)}
+.model-note.ok{border-color:rgba(57,217,138,.35);background:rgba(57,217,138,.06)}
+.model-note.warn{border-color:rgba(255,107,107,.35);background:rgba(255,107,107,.06)}
+.model-note b{color:var(--accent)}
+.model-note .no{color:#ff6b6b;font-weight:600}
+.model-note .yes{color:#39d98a;font-weight:600}
+
+.fb-chain{margin-top:10px;padding:10px 12px;border-radius:9px;background:var(--panel2);
+  border:1px dashed var(--border2);font-size:11px}
+.fb-chain-title{color:var(--muted);text-transform:uppercase;letter-spacing:.5px;
+  margin-bottom:6px;font-size:10px}
+.fb-item{display:flex;align-items:center;gap:8px;padding:4px 0;color:var(--muted)}
+.fb-item .fb-dot{width:8px;height:8px;border-radius:50%;background:var(--border2);flex:0 0 8px}
+.fb-item.active .fb-dot{background:var(--accent);box-shadow:0 0 8px var(--accent-glow)}
+.fb-item.active{color:var(--accent);font-weight:600}
+.fb-item.fail .fb-dot{background:#ff6b6b}
+.fb-item.trying .fb-dot{background:var(--warn);animation:thinkPulse .8s infinite}
+.fb-item.trying{color:var(--warn)}
+.fb-item.skip{opacity:.4;text-decoration:line-through}
+.fb-item.skip .fb-dot{background:var(--muted)}
+.fb-item .fb-name{flex:1}
+.fb-item .fb-status{font-size:10px;font-family:Consolas,monospace}
+
+.mode-btn{display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px;border-radius:9px;
+  margin-bottom:6px;background:var(--panel2);border:1px solid var(--border);color:var(--muted);
+  cursor:pointer;font:inherit;font-size:13px;text-align:left;transition:.2s}
+.mode-btn:hover{border-color:var(--border2);color:var(--text)}
+.mode-btn.active{background:var(--accent-soft);border-color:var(--accent-line);color:var(--accent);font-weight:600}
+.mode-btn .ico{font-size:16px}
+.ai-hint{font-size:11px;color:var(--muted);line-height:1.55;background:var(--panel2);
+  border:1px solid var(--border);border-radius:9px;padding:10px}
+
+.ai-tabs{display:flex;gap:4px;padding:8px 16px;background:var(--panel);
+  border-bottom:1px solid var(--border);overflow-x:auto}
+.ai-tabs::-webkit-scrollbar{height:0}
+.ai-tab{background:transparent;border:1px solid transparent;border-radius:8px;
+  padding:6px 14px;font-size:12.5px;color:var(--muted);cursor:pointer;
+  font-family:inherit;transition:.15s;white-space:nowrap}
+.ai-tab:hover{background:var(--panel2);color:var(--text)}
+.ai-tab.active{background:var(--accent-soft);border-color:var(--accent-line);
+  color:var(--accent);font-weight:600}
+
+.ai-panel{display:none;flex:1;flex-direction:column;min-height:0}
+.ai-panel.active{display:flex}
+
+.media-view{flex:1;overflow:auto;padding:20px;display:flex;
+  align-items:center;justify-content:center;min-height:0;
+  background:var(--bg)}
+.media-view img,.media-view video{max-width:100%;max-height:100%;
+  border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.5)}
+.media-view audio{width:100%;max-width:500px;border-radius:10px}
+.media-empty{text-align:center;color:var(--muted);display:flex;
+  flex-direction:column;align-items:center;gap:12px;font-size:14px}
+.media-icon{font-size:64px;opacity:.4}
+.media-loading{display:flex;flex-direction:column;align-items:center;gap:14px;
+  color:var(--accent);font-size:14px}
+.media-spinner{width:48px;height:48px;border:3px solid var(--border2);
+  border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite}
+.media-progress{font-size:12px;color:var(--muted);margin-top:4px}
+.media-error{color:var(--danger);font-size:13.5px;text-align:center;
+  background:rgba(255,107,107,.08);padding:14px 20px;border-radius:10px;
+  border:1px solid rgba(255,107,107,.3);max-width:520px;line-height:1.6}
+.media-input{display:flex;gap:8px;padding:12px 16px;background:var(--panel);
+  border-top:1px solid var(--border);flex-wrap:wrap;align-items:center}
+.media-input .sel{padding:9px 11px;font-size:12.5px}
+.media-input input[type=text]{flex:1;min-width:180px;padding:10px 14px;
+  background:var(--panel2);border:1px solid var(--border);border-radius:10px;
+  color:var(--text);font-size:13.5px;outline:0;font-family:inherit;transition:.2s}
+.media-input input[type=text]:focus{border-color:var(--accent-line);
+  box-shadow:0 0 0 3px var(--accent-soft)}
+.media-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;justify-content:center}
+.media-actions a{padding:8px 16px;border-radius:9px;background:var(--accent);
+  color:#04140c;text-decoration:none;font-weight:700;font-size:12.5px;
+  display:inline-block;transition:.15s;cursor:pointer;border:0;font-family:inherit}
+.media-actions a:hover{filter:brightness(1.1);transform:translateY(-1px)}
+.media-actions a.ghost{background:var(--panel2);color:var(--text);
+  border:1px solid var(--border2)}
+
+.chat-scroll{flex:1;overflow:auto;padding:20px;display:flex;flex-direction:column;gap:14px}
+.chat-scroll::-webkit-scrollbar{width:9px}
+.chat-scroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:6px}
+.msg{display:flex;gap:11px;max-width:900px;animation:fadeInUp .35s ease}
+.msg.user{align-self:flex-end;flex-direction:row-reverse;animation:slideInRight .3s ease}
+.msg.ai{animation:slideInLeft .3s ease}
+.avatar{width:34px;height:34px;flex:0 0 34px;border-radius:50%;display:grid;place-items:center;
+  font-size:16px;background:var(--panel2);border:1px solid var(--border)}
+.msg.ai .avatar{background:linear-gradient(135deg,var(--accent),#4dabf7);border:0;
+  box-shadow:0 3px 14px var(--accent-glow)}
+.bubble{background:var(--panel);border:1px solid var(--border);border-radius:14px;
+  padding:12px 15px;font-size:13.5px;line-height:1.65;min-width:0;overflow-wrap:break-word;position:relative}
+.msg.user .bubble{background:var(--accent-soft);border-color:var(--accent-line)}
+.bubble b{color:var(--accent)}
+.bubble code.inline{background:var(--panel2);border:1px solid var(--border);padding:1px 6px;
+  border-radius:5px;font-family:Consolas,monospace;font-size:12.5px;color:var(--accent)}
+.bubble pre.code{background:var(--bg);border:1px solid var(--border);border-radius:9px;
+  padding:12px 14px;margin:9px 0;overflow:auto;position:relative;
+  font-family:Consolas,monospace;font-size:12.5px;line-height:1.55;color:#c9d1d9;max-height:360px}
+body.light .bubble pre.code{background:#0d1117;color:#c9d1d9}
+.code-tools{position:absolute;top:7px;right:7px;display:flex;gap:5px;opacity:0;transition:.15s}
+pre.code:hover .code-tools{opacity:1}
+.code-btn{font-size:11px;padding:3px 9px;background:var(--panel2);border:1px solid var(--border2);
+  border-radius:6px;color:var(--muted);cursor:pointer;font-family:inherit}
+.code-btn:hover{color:var(--accent);border-color:var(--accent-line)}
+.code-btn.run{color:var(--accent);border-color:var(--accent-line)}
+
+.tw-content{white-space:pre-wrap;word-break:break-word}
+.tw-cursor{display:inline-block;width:8px;height:14px;background:var(--accent);margin-left:2px;
+  vertical-align:-2px;animation:blinkCaret 1s steps(1) infinite;box-shadow:0 0 8px var(--accent-glow)}
+.typing{display:flex;gap:4px;padding:6px 2px}
+.typing i{width:7px;height:7px;border-radius:50%;background:var(--accent);animation:typingDot 1.3s infinite}
+.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+
+.chat-input{border-top:1px solid var(--border);padding:12px 16px;background:var(--panel);
+  display:flex;gap:10px;align-items:flex-end}
+#chatText{flex:1;resize:none;min-height:44px;max-height:150px;background:var(--panel2);
+  border:1px solid var(--border);border-radius:11px;padding:11px 14px;color:var(--text);
+  font-size:13.5px;line-height:1.5;outline:0;transition:.2s}
+#chatText:focus{border-color:var(--accent-line);box-shadow:0 0 0 3px var(--accent-soft)}
+.quick-row{display:flex;gap:7px;flex-wrap:wrap;padding:0 16px 12px;background:var(--panel)}
+.quick{font-size:11.5px;padding:5px 11px;border-radius:16px;background:var(--panel2);
+  border:1px solid var(--border);color:var(--muted);cursor:pointer;transition:.2s}
+.quick:hover{border-color:var(--accent-line);color:var(--accent);transform:translateY(-2px)}
+.quick.d3{border-color:rgba(167,139,250,.35);color:#a78bfa}
+
+.set-wrap{padding:22px;max-width:900px;display:flex;flex-direction:column;gap:18px}
+.set-card{background:var(--panel);border:1px solid var(--border);border-radius:var(--r);
+  padding:18px 20px}
+.set-card h3{margin:0 0 4px;font-size:14.5px;display:flex;align-items:center;gap:8px}
+.set-card .desc{font-size:12px;color:var(--muted);margin:0 0 16px;line-height:1.5}
+.set-row{display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:11px 0;border-bottom:1px solid var(--border)}
+.set-row:last-child{border-bottom:0;padding-bottom:0}
+.set-row .lbl{font-size:13.5px}
+.set-row .lbl small{display:block;color:var(--muted);font-size:11.5px;margin-top:3px}
+.tg{position:relative;width:46px;height:26px;flex:0 0 46px;background:var(--border2);
+  border-radius:20px;cursor:pointer;transition:.25s}
+.tg::after{content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;
+  background:#fff;transition:.25s}
+.tg.on{background:var(--accent);box-shadow:0 0 12px var(--accent-glow)}
+.tg.on::after{transform:translateX(20px)}
+.tg::before{content:'FALSE';position:absolute;right:7px;top:50%;transform:translateY(-50%);
+  font-size:8px;font-weight:800;color:#fff;letter-spacing:.4px}
+.tg.on::before{content:'TRUE';right:auto;left:7px}
+.color-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+input[type=color]{width:52px;height:38px;border:1px solid var(--border2);border-radius:9px;
+  background:var(--panel2);cursor:pointer;padding:3px}
+.swatches{display:flex;gap:8px;flex-wrap:wrap}
+.sw{width:30px;height:30px;border-radius:8px;cursor:pointer;border:2px solid transparent;transition:.2s}
+.sw:hover{transform:scale(1.18)}
+.sw.active{border-color:var(--text);box-shadow:0 0 0 2px var(--panel),0 0 14px var(--accent-glow)}
+input[type=range]{width:180px;accent-color:var(--accent);cursor:pointer}
+input[type=text],input[type=password],select.sel{background:var(--panel2);
+  border:1px solid var(--border);border-radius:9px;padding:8px 12px;color:var(--text);
+  font-size:13px;outline:0}
+input[type=text]:focus,input[type=password]:focus,select.sel:focus{
+  border-color:var(--accent-line);box-shadow:0 0 0 3px var(--accent-soft)}
+.wide{width:100%;max-width:440px}
+.val-badge{font-size:12px;color:var(--accent);font-weight:600;background:var(--accent-soft);
+  padding:3px 10px;border-radius:20px;min-width:44px;text-align:center}
+.api-status{font-size:12px;margin-top:8px;min-height:18px}
+.api-status.ok{color:var(--accent)}.api-status.err{color:var(--danger)}
+.provider-card{padding:14px;background:var(--panel2);border:1px solid var(--border);
+  border-radius:11px;margin-bottom:10px}
+.provider-card.active{border-color:var(--accent-line);background:var(--accent-soft)}
+.provider-card .pc-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+.provider-card .pc-head b{font-size:13.5px}
+.provider-card .pc-region{font-size:9px;padding:2px 8px;border-radius:10px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.4px}
+.provider-card .pc-region.ru{background:rgba(57,217,138,.18);color:#39d98a}
+.provider-card .pc-region.vpn{background:rgba(255,200,87,.18);color:#ffc857}
+.provider-card .pc-region.free{background:linear-gradient(135deg,rgba(57,217,138,.25),rgba(77,171,247,.25));color:#39d98a}
+.provider-card .pc-limits{font-size:11px;color:var(--accent);margin-bottom:4px;font-weight:500}
+.provider-card .pc-hint{font-size:11px;color:var(--muted);line-height:1.5}
+
+.vpn-status{background:var(--panel2);border:1px solid var(--border);border-radius:11px;
+  padding:12px 16px;margin-bottom:14px}
+.vpn-row{display:flex;justify-content:space-between;align-items:center;
+  padding:6px 0;font-size:13px;border-bottom:1px solid var(--border)}
+.vpn-row:last-child{border-bottom:0;padding-bottom:0}
+.vpn-label{color:var(--muted)}
+.vpn-val{font-weight:600;font-family:Consolas,monospace;color:var(--accent);
+  font-size:12.5px;max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vpn-val.err{color:var(--danger)}.vpn-val.warn{color:var(--warn)}
+.vpn-list{margin-top:14px;display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}
+.vpn-item{padding:14px;background:var(--panel2);border:1px solid var(--border);border-radius:11px}
+.vpn-item:hover{border-color:var(--accent-line);transform:translateY(-2px)}
+.vpn-item h4{margin:0 0 4px;font-size:14px;display:flex;align-items:center;gap:8px}
+.vpn-item .vpn-tag{font-size:9.5px;padding:2px 7px;border-radius:9px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.4px}
+.vpn-item .vpn-tag.free{background:rgba(57,217,138,.15);color:#39d98a}
+.vpn-item p{margin:6px 0 10px;font-size:11.5px;color:var(--muted);line-height:1.5}
+.vpn-item a{padding:7px 14px;border-radius:8px;background:var(--accent);color:#04140c;
+  font-weight:700;text-decoration:none;font-size:12px;display:inline-block}
+
+@media(max-width:900px){
+  .sidebar{width:66px;flex-basis:66px}
+  .sidebar .nav-label,.sidebar .brand-text,.sidebar .side-note{display:none}
+  .editor-split{flex-direction:column}
+  .ed-col{width:100%;height:48%;border-right:0;border-bottom:1px solid var(--border)}
+  .pv-col{height:52%}
+  .ai-layout{flex-direction:column}
+  .ai-side{width:100%;flex:0 0 auto;border-right:0;border-bottom:1px solid var(--border)}
+}
+</style>
+</head>
+<body class="no-anim">
+
+<div class="splash" id="splash">
+  <div class="splash-logo">🧊</div>
+  <div class="splash-name">GAMELAB</div>
+  <div class="splash-tag">Чат · Картинки · Звук · Видео · 2D/3D<br><span id="splashCountry">Определяю страну...</span></div>
+  <div class="splash-dots"><i></i><i></i><i></i></div>
+</div>
+
+<canvas id="particles"></canvas>
+
+<aside class="sidebar" id="sidebar">
+  <div class="brand"><div class="logo">🎮</div><div class="brand-text">Game<span>Lab</span></div></div>
+  <button class="nav-btn active" data-view="ai"><span class="ico">🤖</span><span class="nav-label">ИИ-студия</span></button>
+  <button class="nav-btn" data-view="catalog"><span class="ico">🗂️</span><span class="nav-label">Каталог игр</span></button>
+  <button class="nav-btn" data-view="editor"><span class="ico">⌨️</span><span class="nav-label">Инжектор</span></button>
+  <button class="nav-btn" data-view="settings"><span class="ico">⚙️</span><span class="nav-label">Настройки</span></button>
+  <div class="side-foot">
+    <div class="side-note">Чат, картинки, звук, видео + 2D/3D игры</div>
+    <button class="collapse-btn" id="collapseBtn">◀</button>
+  </div>
+</aside>
+
+<main>
+  <section class="view active" id="view-ai">
+    <div class="ai-layout">
+      <div class="ai-side">
+        <div class="country-badge" id="countryBadge">
+          <span class="flag" id="countryFlag">🌐</span>
+          <div style="flex:1;min-width:0">
+            <b id="countryName">Определяю...</b>
+            <small id="countryMsg">проверяю IP</small>
+          </div>
+        </div>
+        <div>
+          <div class="mode-title">Модели ИИ</div>
+          <div id="modelList"></div>
+          <div class="model-note" id="modelNote"></div>
+          <div id="fbChain"></div>
+        </div>
+        <div>
+          <div class="mode-title">Режим</div>
+          <button class="mode-btn active" data-mode="create">
+            <span class="ico">🛠️</span>
+            <span><b>Создание</b><br><small style="color:var(--muted)">2D и 3D код</small></span>
+          </button>
+          <button class="mode-btn" data-mode="learn">
+            <span class="ico">🎓</span>
+            <span><b>Учёба</b><br><small style="color:var(--muted)">учит кодить</small></span>
+          </button>
+        </div>
+        <div class="ai-hint" id="aiHint">
+          <b>Авто</b> работает без ключа. Скажи «сделай 3D куб».
+        </div>
+        <button class="btn sm ghost" id="btnClearChat">🗑 Очистить чат</button>
+      </div>
+      <div class="chat-col" style="flex:1;display:flex;flex-direction:column;min-width:0">
+        <div class="topbar">
+          <h2 id="aiTitle">🆓 Авто</h2>
+          <span class="sub" id="aiSub">Цепочка источников</span>
+          <div class="spacer"></div>
+          <button class="btn sm" id="btnGoSettings">⚙️ Настроить</button>
+        </div>
+        <div class="ai-tabs">
+          <button class="ai-tab active" data-aitab="chat">💬 Чат</button>
+          <button class="ai-tab" data-aitab="image">🎨 Картинки</button>
+          <button class="ai-tab" data-aitab="audio">🔊 Звук</button>
+          <button class="ai-tab" data-aitab="video">🎬 Видео</button>
+        </div>
+
+        <div class="ai-panel active" id="panel-chat">
+          <div class="chat-scroll" id="chatScroll"></div>
+          <div class="quick-row" id="quickRow"></div>
+          <div class="chat-input">
+            <textarea id="chatText" rows="1" placeholder="Опиши, что нужно..."></textarea>
+            <button class="btn primary" id="btnSend">Отправить ➤</button>
+          </div>
+        </div>
+
+        <div class="ai-panel" id="panel-image">
+          <div class="media-view" id="imageView">
+            <div class="media-empty">
+              <div class="media-icon">🎨</div>
+              <div>Опиши картинку — и она появится здесь</div>
+            </div>
+          </div>
+          <div class="media-input">
+            <select class="sel" id="imageProvider">
+              <option value="pollinations">🆓 Pollinations (без ключа)</option>
+              <option value="stability">🎨 Stability AI (SDXL)</option>
+              <option value="together">⚡ Together AI (Flux)</option>
+              <option value="deepinfra">🚀 DeepInfra</option>
+              <option value="openai">🧠 OpenAI DALL-E 3</option>
+            </select>
+            <input type="text" id="imagePrompt" placeholder="Закат над морем, стиль аниме, 4K...">
+            <button class="btn primary" id="btnImage">Создать 🎨</button>
+          </div>
+        </div>
+
+        <div class="ai-panel" id="panel-audio">
+          <div class="media-view" id="audioView">
+            <div class="media-empty">
+              <div class="media-icon">🔊</div>
+              <div>Введи текст — озвучу голосом</div>
+            </div>
+          </div>
+          <div class="media-input">
+            <select class="sel" id="audioProvider">
+              <option value="elevenlabs">🎙️ ElevenLabs (TTS)</option>
+            </select>
+            <select class="sel" id="audioVoice">
+              <option value="21m00Tcm4TlvDq8ikWAM">Rachel (мягкий, EN)</option>
+              <option value="AZnzlk1XvdvUeBnXmlld">Domi (энергичный, EN)</option>
+              <option value="EXAVITQu4vr4xnSDxMaL">Bella (тёплый, EN)</option>
+            </select>
+            <input type="text" id="audioText" placeholder="Текст для озвучки...">
+            <button class="btn primary" id="btnAudio">Озвучить 🔊</button>
+          </div>
+        </div>
+
+        <div class="ai-panel" id="panel-video">
+          <div class="media-view" id="videoView">
+            <div class="media-empty">
+              <div class="media-icon">🎬</div>
+              <div>Опиши видео — Replicate сгенерирует (медленно)</div>
+            </div>
+          </div>
+          <div class="media-input">
+            <select class="sel" id="videoProvider">
+              <option value="replicate">🎬 Replicate (Minimax video-01)</option>
+            </select>
+            <input type="text" id="videoPrompt" placeholder="Космический корабль летит сквозь туманность...">
+            <button class="btn primary" id="btnVideo">Создать 🎬</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="view" id="view-catalog">
+    <div class="topbar">
+      <h2>🗂️ Каталог игр</h2>
+      <span class="sub" id="catCount"></span>
+      <div class="spacer"></div>
+      <button class="btn sm" id="btnRandom">🎲 Случайная</button>
+    </div>
+    <div class="scroll"><div class="cat-wrap">
+      <div class="filters" id="filters"></div>
+      <div class="grid" id="gameGrid"></div>
+    </div></div>
+  </section>
+
+  <section class="view" id="view-editor">
+    <div class="topbar">
+      <h2>⌨️ Инжектор кода</h2>
+      <div class="spacer"></div>
+      <select class="sel" id="examples"><option value="">— примеры —</option></select>
+      <button class="btn primary" id="btnRun">▶ Запустить</button>
+      <button class="btn" id="btnStop">■ Стоп</button>
+      <button class="btn ghost" id="btnFs">⛶ Полный экран</button>
+    </div>
+    <div class="editor-split">
+      <div class="ed-col">
+        <div class="pane-head">
+          <span class="dot"></span> Код игры
+          <div class="spacer"></div>
+          <span class="mode3d" id="modeBadge">2D</span>
+        </div>
+        <textarea id="code" spellcheck="false" placeholder="Вставьте код игры..."></textarea>
+      </div>
+      <div class="pv-col">
+        <div class="pane-head"><span class="dot" style="background:#ff6b6b"></span> Экран игры</div>
+        <div class="stage" id="stage">
+          <iframe id="frame" sandbox="allow-scripts allow-modals allow-pointer-lock allow-same-origin" allowfullscreen></iframe>
+          <div class="ph" id="placeholder">
+            <div class="big">🕹️</div>
+            <div class="txt">Вставь код слева и нажми <b>«Запустить»</b></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="statusbar" id="status">Готово. Ctrl+Enter — запустить.</div>
+  </section>
+
+  <section class="view" id="view-settings">
+    <div class="topbar"><h2>⚙️ Настройки</h2><div class="spacer"></div>
+      <button class="btn danger sm" id="btnReset">Сбросить всё</button>
+    </div>
+    <div class="scroll"><div class="set-wrap">
+
+      <div class="set-card">
+        <h3>🧊 3D-режим</h3>
+        <div class="set-row">
+          <div class="lbl">Всегда подключать Three.js<small>Автоматически добавлять CDN</small></div>
+          <div class="tg" data-key="autoThree"></div>
+        </div>
+        <div class="set-row">
+          <div class="lbl">Показывать бейдж 2D/3D</div>
+          <div class="tg" data-key="showModeBadge"></div>
+        </div>
+      </div>
+
+      <div class="set-card">
+        <h3>🆓 Работает без ключа (Авто)</h3>
+        <p class="desc">7 источников с автофоллбэком.</p>
+        <div class="provider-card active">
+          <div class="pc-head"><b>Pollinations (GET/POST)</b><span class="pc-region free">FREE</span></div>
+          <div class="pc-limits">Без ключа · 3 эндпоинта</div>
+        </div>
+        <div class="provider-card">
+          <div class="pc-head"><b>DuckDuckGo AI</b><span class="pc-region free">FREE</span></div>
+          <div class="pc-limits">Без ключа · gpt-4o-mini</div>
+        </div>
+        <div class="provider-card">
+          <div class="pc-head"><b>Локальные шаблоны</b><span class="pc-region free">OFFLINE</span></div>
+          <div class="pc-limits">Всегда · 14 игр (2D + 3D)</div>
+        </div>
+      </div>
+
+      <div class="set-card">
+        <h3>💬 Ключи чат-моделей</h3>
+        <p class="desc">Все бесплатные или с бесплатным тарифом.</p>
+
+        <div class="provider-card" id="pc-groq">
+          <div class="pc-head"><b>⚡ Groq</b><span class="pc-region free">FREE</span></div>
+          <div class="pc-limits">30 зап/мин · мгновенный</div>
+          <div class="pc-hint">console.groq.com</div>
+          <div style="margin-top:10px"><input type="password" class="wide" id="key-groq" placeholder="gsk_..."></div>
+        </div>
+
+        <div class="provider-card" id="pc-gemini">
+          <div class="pc-head"><b>💎 Google Gemini</b><span class="pc-region vpn">VPN</span></div>
+          <div class="pc-limits">15 зап/мин · топ качество</div>
+          <div class="pc-hint">aistudio.google.com</div>
+          <div style="margin-top:10px"><input type="password" class="wide" id="key-gemini" placeholder="AIza..."></div>
+        </div>
+
+        <div class="provider-card" id="pc-deepseek">
+          <div class="pc-head"><b>🐋 DeepSeek</b><span class="pc-region vpn">FREE 5M</span></div>
+          <div class="pc-limits">5M токенов бесплатно</div>
+          <div class="pc-hint">platform.deepseek.com</div>
+          <div style="margin-top:10px"><input type="password" class="wide" id="key-deepseek" placeholder="sk-..."></div>
+        </div>
+
+        <div class="provider-card" id="pc-gigachat">
+          <div class="pc-head"><b>⚡ GigaChat (Сбер)</b><span class="pc-region ru">RU</span></div>
+          <div class="pc-limits">Бесплатный тариф</div>
+          <div class="pc-hint">developers.sber.ru · client_id:client_secret</div>
+          <div style="margin-top:10px"><input type="password" class="wide" id="key-gigachat" placeholder="client_id:client_secret"></div>
+        </div>
+
+        <div class="provider-card" id="pc-yandex">
+          <div class="pc-head"><b>🚀 YandexGPT-Pro</b><span class="pc-region ru">RU</span></div>
+          <div class="pc-limits">1000 ₽ грант</div>
+          <div class="pc-hint">console.yandex.cloud · Api-Key:folder_id</div>
+          <div style="margin-top:10px"><input type="password" class="wide" id="key-yandex" placeholder="AQVN...:b1g..."></div>
+        </div>
+
+        <div class="set-row" style="justify-content:flex-start;gap:10px">
+          <button class="btn sm" id="btnTestApi">🔌 Проверить модель</button>
+          <span class="api-status" id="apiStatus"></span>
+        </div>
+      </div>
+
+      <div class="set-card">
+        <h3>🎨 Ключи для картинок / звука / видео</h3>
+        <p class="desc">Работают отдельно от чат-моделей.</p>
+
+        <div class="provider-card">
+          <div class="pc-head"><b>🎨 Stability AI</b><span class="pc-region vpn">VPN</span></div>
+          <div class="pc-limits">SDXL · 25 бесплатных кредитов</div>
+          <div class="pc-hint">platform.stability.ai → API Keys</div>
+          <div style="margin-top:9px"><input type="password" class="wide" id="key-stability" placeholder="sk-..."></div>
+        </div>
+
+        <div class="provider-card">
+          <div class="pc-head"><b>⚡ Together AI</b><span class="pc-region vpn">VPN</span></div>
+          <div class="pc-limits">Flux Schnell · $1 бесплатно</div>
+          <div class="pc-hint">api.together.xyz → API Keys</div>
+          <div style="margin-top:9px"><input type="password" class="wide" id="key-together" placeholder="..."></div>
+        </div>
+
+        <div class="provider-card">
+          <div class="pc-head"><b>🚀 DeepInfra</b><span class="pc-region vpn">VPN</span></div>
+          <div class="pc-limits">SDXL / Flux · от $0.0002 за картинку</div>
+          <div class="pc-hint">deepinfra.com → API Keys</div>
+          <div style="margin-top:9px"><input type="password" class="wide" id="key-deepinfra" placeholder="..."></div>
+        </div>
+
+        <div class="provider-card">
+          <div class="pc-head"><b>🧠 OpenAI</b><span class="pc-region vpn">VPN</span></div>
+          <div class="pc-limits">DALL-E 3 · платно</div>
+          <div class="pc-hint">platform.openai.com</div>
+          <div style="margin-top:9px"><input type="password" class="wide" id="key-openai" placeholder="sk-..."></div>
+        </div>
+
+        <div class="provider-card">
+          <div class="pc-head"><b>🎙️ ElevenLabs</b><span class="pc-region vpn">VPN</span></div>
+          <div class="pc-limits">TTS · 10k символов/мес бесплатно</div>
+          <div class="pc-hint">elevenlabs.io → Profile → API Key</div>
+          <div style="margin-top:9px"><input type="password" class="wide" id="key-elevenlabs" placeholder="..."></div>
+        </div>
+
+        <div class="provider-card">
+          <div class="pc-head"><b>🎬 Replicate</b><span class="pc-region vpn">VPN</span></div>
+          <div class="pc-limits">Minimax video-01 · платно по секундам</div>
+          <div class="pc-hint">replicate.com → Account → API Tokens</div>
+          <div style="margin-top:9px"><input type="password" class="wide" id="key-replicate" placeholder="r8_..."></div>
+        </div>
+      </div>
+
+      <div class="set-card">
+        <h3>🌐 Определение страны</h3>
+        <div class="vpn-status">
+          <div class="vpn-row"><span class="vpn-label">🌍 IP:</span><span class="vpn-val" id="ipVal">—</span></div>
+          <div class="vpn-row"><span class="vpn-label">📍 Страна:</span><span class="vpn-val" id="countryVal">—</span></div>
+          <div class="vpn-row"><span class="vpn-label">🏢 Провайдер:</span><span class="vpn-val" id="ispVal">—</span></div>
+        </div>
+        <button class="btn sm" id="btnCheckIP">🔄 Обновить</button>
+      </div>
+
+      <div class="set-card">
+        <h3>🚀 Бесплатные VPN</h3>
+        <div class="vpn-list" id="vpnList"></div>
+      </div>
+
+      <div class="set-card">
+        <h3>🎨 Внешний вид</h3>
+        <div class="set-row"><div class="lbl">Основной цвет</div>
+          <div class="color-row"><input type="color" id="accentPicker" value="#39d98a">
+          <div class="swatches" id="swatches"></div></div></div>
+        <div class="set-row"><div class="lbl">Светлая тема</div><div class="tg" data-key="theme"></div></div>
+        <div class="set-row"><div class="lbl">Анимации</div><div class="tg" data-key="animations"></div></div>
+        <div class="set-row"><div class="lbl">Частицы</div><div class="tg" data-key="particlesOn"></div></div>
+        <div class="set-row"><div class="lbl">Сетка на экране игры</div><div class="tg" data-key="grid"></div></div>
+      </div>
+
+      <div class="set-card">
+        <h3>⚡ Поведение</h3>
+        <div class="set-row"><div class="lbl">Автосохранение кода</div><div class="tg" data-key="autosave"></div></div>
+        <div class="set-row"><div class="lbl">Автозапуск из каталога</div><div class="tg" data-key="autostart"></div></div>
+        <div class="set-row"><div class="lbl">Звук</div><div class="tg" data-key="sound"></div></div>
+        <div class="set-row"><div class="lbl">Печатающийся текст</div><div class="tg" data-key="typewriter"></div></div>
+        <div class="set-row"><div class="lbl">Приветствие при запуске</div><div class="tg" data-key="welcomeSplash"></div></div>
+      </div>
+
+      <div class="set-card">
+        <h3>⌨️ Редактор</h3>
+        <div class="set-row"><div class="lbl">Размер шрифта</div>
+          <div class="color-row"><input type="range" id="fontSize" min="10" max="20" step="1">
+          <span class="val-badge" id="fontSizeVal">13</span></div></div>
+        <div class="set-row"><div class="lbl">Табуляция</div>
+          <select class="sel" id="tabSize"><option value="2">2 пробела</option><option value="4">4 пробела</option></select></div>
+      </div>
+
+    </div></div>
+  </section>
+</main>
+
+<script>
+/* ================================================================
+   1. МОДЕЛИ
+   ================================================================ */
+const MODELS = {
+  auto:{ name:'Авто', icon:'🆓', badge:'FREE',
+    short:'Цепочка из 7 источников', provider:'chain',
+    greeting:'🆓 **Авто** на связи.\n\nРаботаю без ключа. Умею **2D и 3D** — просто скажи «сделай 3D куб» или «сделай змейку».' },
+  light:{ name:'Лайт', icon:'⚡', badge:'RU',
+    short:'GigaChat · Сбер', provider:'gigachat',
+    greeting:'⚡ **Лайт** на связи.\n\n**GigaChat** от Сбера. Доступен в РФ без VPN.' },
+  premium:{ name:'Премиум', icon:'💎', badge:'VPN',
+    short:'Google Gemini · топ', provider:'gemini',
+    greeting:'💎 **Премиум** на связи.\n\n**Google Gemini**. На 5 голов выше Лайт, но нету в России.' },
+  bypass:{ name:'Обход', icon:'🚀', badge:'RU',
+    short:'YandexGPT-Pro · РФ', provider:'yandex',
+    greeting:'🚀 **Обход** на связи.\n\n**YandexGPT-Pro**. Работает в РФ без VPN.' }
+};
+
+const FALLBACK_CHAIN = [
+  { id:'polli_get', name:'Pollinations', kind:'plain', url:'https://text.pollinations.ai/' },
+  { id:'polli_post', name:'Pollinations POST', kind:'openai',
+    url:'https://text.pollinations.ai/openai', model:'openai' },
+  { id:'polli_mistral', name:'Pollinations Mistral', kind:'openai',
+    url:'https://text.pollinations.ai/openai', model:'mistral' },
+  { id:'ddg', name:'DuckDuckGo AI', kind:'ddg',
+    url:'https://duckduckgo.com/duckchat/v1/chat', model:'gpt-4o-mini' },
+  { id:'groq', name:'Groq', kind:'openai',
+    url:'https://api.groq.com/openai/v1/chat/completions',
+    model:'llama-3.3-70b-versatile', needsKey:'groq' },
+  { id:'gemini', name:'Google Gemini', kind:'openai',
+    url:'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
+    model:'gemini-2.0-flash', needsKey:'gemini' },
+  { id:'deepseek', name:'DeepSeek', kind:'openai',
+    url:'https://api.deepseek.com/v1/chat/completions',
+    model:'deepseek-chat', needsKey:'deepseek' }
+];
+
+const PROVIDERS = {
+  gigachat:{ url:'https://gigachat.devices.sberbank.ru/api/v1/chat/completions',
+    model:'GigaChat', special:'gigachat' },
+  gemini:{ url:'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
+    model:'gemini-2.0-flash' },
+  yandex:{ url:'https://llm.api.cloud.yandex.net/foundationModels/v1/completion',
+    model:'yandexgpt-pro', special:'yandex' }
+};
+
+/* ================================================================
+   2. ОПРЕДЕЛЕНИЕ СТРАНЫ — 5 источников + ручной выбор
+   ================================================================ */
+let userCountry = null;
+let countryChecked = false;
+
+async function detectCountry(){
+  updateCountryUI(null, 'loading');
+
+  const sources = [
+    { url:'https://ipapi.co/json/',
+      parse: d => ({ country_code:d.country_code, country_name:d.country_name, ip:d.ip, org:d.org }) },
+    { url:'https://ipwho.is/',
+      parse: d => ({ country_code:d.country_code, country_name:d.country, ip:d.ip, org:d.connection && d.connection.isp }) },
+    { url:'https://ipinfo.io/json',
+      parse: d => ({ country_code:d.country, country_name:d.country, ip:d.ip, org:d.org }) },
+    { url:'https://api.country.is/',
+      parse: d => ({ country_code:d.country, country_name:d.country, ip:d.ip, org:null }) },
+    { url:'https://get.geojs.io/v1/ip/geo.json',
+      parse: d => ({ country_code:d.country_code, country_name:d.country, ip:d.ip, org:d.organization_name || d.organization }) }
+  ];
+
+  let data = null, lastErr = null;
+
+  for(let i = 0; i < sources.length; i++){
+    const src = sources[i];
+    try{
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 4000);
+      const r = await fetch(src.url, { signal: ctrl.signal });
+      clearTimeout(timer);
+      if(!r.ok) throw new Error('HTTP ' + r.status);
+      const json = await r.json();
+      const parsed = src.parse(json);
+      if(!parsed.country_code) throw new Error('нет country_code');
+      data = parsed;
+      console.log('✅ Страна определена через ' + src.url, data);
+      break;
+    }catch(err){
+      lastErr = err;
+      console.warn('⚠ Не сработал ' + src.url + ':', err.message);
+    }
+  }
+
+  if(data){
+    userCountry = data.country_code;
+    countryChecked = true;
+    updateCountryUI(data);
+  } else {
+    console.error('❌ Не удалось определить страну:', lastErr);
+    userCountry = null;
+    countryChecked = true;
+    updateCountryUI({ country_code:'UNKNOWN', country_name:'Не определилась', ip:'—', org:'(проверь подключение)' });
+    showCountryFallback();
+  }
+
+  renderModels(); updateModelUI(); updateChatHeader();
+}
+
+function showCountryFallback(){
+  const badge = document.getElementById('countryBadge');
+  if(!badge) return;
+  if(document.getElementById('manualCountry')) return;
+
+  const box = document.createElement('div');
+  box.id = 'manualCountry';
+  box.style.cssText = 'margin-top:8px;padding:10px;background:var(--panel2);' +
+    'border:1px solid var(--warn);border-radius:9px;font-size:11.5px';
+  box.innerHTML =
+    '<div style="color:var(--warn);margin-bottom:6px;font-weight:600">⚠ Страна не определилась</div>' +
+    '<div style="color:var(--muted);margin-bottom:8px;line-height:1.5">' +
+    'Выбери вручную:</div>' +
+    '<button class="btn sm" id="ccRU" style="margin-right:6px">🇷🇺 Россия</button>' +
+    '<button class="btn sm" id="ccUS">🌍 Не Россия</button>';
+
+  badge.parentNode.insertBefore(box, badge.nextSibling);
+
+  const btnRU = document.getElementById('ccRU');
+  const btnUS = document.getElementById('ccUS');
+  if(btnRU) btnRU.onclick = () => {
+    userCountry = 'RU'; countryChecked = true;
+    updateCountryUI({ country_code:'RU', country_name:'Россия', ip:'—', org:'(вручную)' });
+    renderModels(); updateModelUI(); updateChatHeader();
+    box.remove();
+  };
+  if(btnUS) btnUS.onclick = () => {
+    userCountry = 'US'; countryChecked = true;
+    updateCountryUI({ country_code:'US', country_name:'(вручную)', ip:'—', org:'(не РФ)' });
+    renderModels(); updateModelUI(); updateChatHeader();
+    box.remove();
+  };
+}
+
+function countryFlag(code){
+  if(!code || code.length !== 2) return '🌐';
+  return String.fromCodePoint(...[...code.toUpperCase()].map(c => 127397 + c.charCodeAt(0)));
+}
+
+function updateCountryUI(data, state){
+  const flag = document.getElementById('countryFlag');
+  const name = document.getElementById('countryName');
+  const msg = document.getElementById('countryMsg');
+  const badge = document.getElementById('countryBadge');
+  const splashC = document.getElementById('splashCountry');
+  const ipV = document.getElementById('ipVal');
+  const cV = document.getElementById('countryVal');
+  const ispV = document.getElementById('ispVal');
+
+  if(state === 'loading'){
+    if(flag) flag.textContent = '🌐';
+    if(name) name.textContent = 'Определяю...';
+    if(msg) msg.textContent = 'проверяю IP';
+    if(badge) badge.className = 'country-badge';
+    if(splashC) splashC.textContent = 'Определяю страну...';
+    return;
+  }
+  const isRU = data.country_code === 'RU';
+  if(flag) flag.textContent = countryFlag(data.country_code);
+  if(name) name.textContent = data.country_name || data.country_code;
+  if(msg) msg.textContent = isRU ? 'Премиум недоступен' : 'Все модели доступны';
+  if(badge) badge.className = 'country-badge ' + (isRU ? 'ru' : 'ok');
+  if(splashC) splashC.textContent = isRU ? '🇷🇺 Россия · Премиум недоступен' : '✅ Полный доступ';
+  if(ipV) ipV.textContent = data.ip || '—';
+  if(cV) cV.textContent = countryFlag(data.country_code) + ' ' + (data.country_name || '—');
+  if(ispV) ispV.textContent = (data.org || '—').slice(0, 40);
+}
+
+function getModelNote(key){
+  if(!countryChecked && key !== 'auto') return { html:'🌐 Определяю страну…', cls:'' };
+  const isRU = userCountry === 'RU';
+  if(key === 'auto') return { html:'✅ <b>Работает везде и без ключа</b> · 7 источников + 2D/3D', cls:'ok' };
+  if(key === 'premium'){
+    if(isRU) return { html:'❌ Этот ИИ на 5 голов выше Лайт, но нету в России — так что у вас он <span class="no">не работает</span>', cls:'warn' };
+    return { html:'✅ Этот ИИ на 5 голов выше Лайт — у вас он <span class="yes">работает</span>', cls:'ok' };
+  }
+  if(key === 'light') return { html: isRU ? '✅ <b>Работает в России</b> (GigaChat) · нужен ключ' : '✅ <b>Работает везде</b> · нужен ключ', cls:'ok' };
+  if(key === 'bypass') return { html: isRU ? '✅ <b>Работает в России</b> (YandexGPT) · нужен ключ' : '✅ <b>Работает везде</b> · нужен ключ', cls:'ok' };
+  return { html:'', cls:'' };
+}
+function isModelAvailable(key){
+  if(key === 'auto') return true;
+  if(key === 'premium') return userCountry !== 'RU';
+  return true;
+}
+
+/* ================================================================
+   3. НАСТРОЙКИ
+   ================================================================ */
+const DEFAULT_SETTINGS = {
+  accent:'#39d98a', theme:false, animations:true, particlesOn:true, grid:true,
+  autosave:true, autostart:true, sound:true, typewriter:true, welcomeSplash:true,
+  autoThree:true, showModeBadge:true,
+  fontSize:13, tabSize:2, model:'auto',
+  keys: {
+    gigachat:'', gemini:'', yandex:'', deepseek:'', groq:'',
+    stability:'', together:'', deepinfra:'', openai:'',
+    elevenlabs:'', replicate:''
+  }
+};
+const PRESET_COLORS = ['#39d98a','#4dabf7','#a78bfa','#ff6b6b','#ffc857','#22d3ee','#f472b6','#fb923c','#84cc16','#e879f9'];
+
+let settings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
+let currentModel = 'auto';
+let aiMode = 'create';
+let chatHistory = [];
+let fbState = {};
+let currentGameFilter = 'all';
+let currentTab = 'chat';
+
+function loadSettings(){
+  try{
+    const raw = localStorage.getItem('gamelab_settings');
+    if(raw){
+      const saved = JSON.parse(raw);
+      settings = Object.assign(settings, saved);
+      settings.keys = Object.assign({
+        gigachat:'', gemini:'', yandex:'', deepseek:'', groq:'',
+        stability:'', together:'', deepinfra:'', openai:'',
+        elevenlabs:'', replicate:''
+      }, saved.keys || {});
+    }
+  }catch(e){}
+}
+function saveSettings(){ try{ localStorage.setItem('gamelab_settings', JSON.stringify(settings)); }catch(e){} }
+
+let audioCtx = null;
+function beep(freq, dur){
+  if(!settings.sound) return;
+  try{
+    if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.frequency.value = freq || 660; o.type = 'sine'; g.gain.value = 0.05;
+    o.connect(g); g.connect(audioCtx.destination); o.start();
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + (dur||0.09));
+    o.stop(audioCtx.currentTime + (dur||0.09));
+  }catch(e){}
+}
+
+function hexToRgb(h){
+  h = h.replace('#','');
+  if(h.length === 3) h = h.split('').map(c=>c+c).join('');
+  return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)];
+}
+function applyAccent(hex){
+  const [r,g,b] = hexToRgb(hex);
+  const root = document.documentElement.style;
+  root.setProperty('--accent', hex);
+  root.setProperty('--accent-soft', `rgba(${r},${g},${b},.15)`);
+  root.setProperty('--accent-line', `rgba(${r},${g},${b},.4)`);
+  root.setProperty('--accent-glow', `rgba(${r},${g},${b},.5)`);
+}
+function applySettings(){
+  applyAccent(settings.accent);
+  document.body.classList.toggle('light', settings.theme);
+  document.body.classList.toggle('no-anim', !settings.animations);
+  document.documentElement.style.setProperty('--fs', settings.fontSize + 'px');
+  const codeEl = document.getElementById('code');
+  if(codeEl) codeEl.style.tabSize = settings.tabSize;
+  const stageEl = document.getElementById('stage');
+  if(stageEl) stageEl.classList.toggle('grid-bg', settings.grid);
+  const partEl = document.getElementById('particles');
+  if(partEl) partEl.style.display = settings.particlesOn ? 'block' : 'none';
+  const badge = document.getElementById('modeBadge');
+  if(badge) badge.style.display = settings.showModeBadge ? 'inline-block' : 'none';
+  document.querySelectorAll('.tg[data-key]').forEach(tg=>{
+    const k = tg.dataset.key;
+    const v = k === 'theme' ? settings.theme : settings[k];
+    tg.classList.toggle('on', !!v);
+  });
+  const ap = document.getElementById('accentPicker');
+  if(ap) ap.value = settings.accent;
+  const fs = document.getElementById('fontSize');
+  if(fs){
+    fs.value = settings.fontSize;
+    document.getElementById('fontSizeVal').textContent = settings.fontSize;
+  }
+  const ts = document.getElementById('tabSize');
+  if(ts) ts.value = settings.tabSize;
+  document.querySelectorAll('.sw').forEach(s=>{
+    s.classList.toggle('active', s.dataset.c.toLowerCase() === settings.accent.toLowerCase());
+  });
+  ['gigachat','gemini','yandex','deepseek','groq'].forEach(id=>{
+    const el = document.getElementById('key-' + id);
+    if(el) el.value = settings.keys[id] || '';
+  });
+  ['stability','together','deepinfra','openai','elevenlabs','replicate'].forEach(id=>{
+    const el = document.getElementById('key-' + id);
+    if(el) el.value = settings.keys[id] || '';
+  });
+}
+
+/* ================================================================
+   4. НАВИГАЦИЯ
+   ================================================================ */
+function switchView(name){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  const target = document.getElementById('view-' + name);
+  if(target) target.classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active', b.dataset.view === name));
+}
+document.querySelectorAll('.nav-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{ beep(720,.05); switchView(btn.dataset.view); });
+});
+const collapseBtn = document.getElementById('collapseBtn');
+if(collapseBtn) collapseBtn.addEventListener('click', function(){
+  const sb = document.getElementById('sidebar');
+  sb.classList.toggle('collapsed');
+  this.textContent = sb.classList.contains('collapsed') ? '▶' : '◀';
+});
+const btnGoSettingsEl = document.getElementById('btnGoSettings');
+if(btnGoSettingsEl) btnGoSettingsEl.addEventListener('click', ()=>switchView('settings'));
+
+document.addEventListener('click', e=>{
+  if(!settings.animations) return;
+  const t = e.target.closest('.btn, .nav-btn, .mode-btn, .quick, .sw, .card, .model-item, .chip, .ai-tab');
+  if(!t) return;
+  const r = t.getBoundingClientRect();
+  const ripple = document.createElement('span');
+  ripple.className = 'ripple';
+  ripple.style.left = (e.clientX - r.left) + 'px';
+  ripple.style.top = (e.clientY - r.top) + 'px';
+  t.appendChild(ripple);
+  setTimeout(()=>ripple.remove(), 720);
+});
+
+(function particles(){
+  const cv = document.getElementById('particles');
+  if(!cv) return;
+  const cx = cv.getContext('2d');
+  let W, H, dots = [];
+  function resize(){ W = cv.width = innerWidth; H = cv.height = innerHeight; }
+  resize(); addEventListener('resize', resize);
+  for(let i=0;i<44;i++) dots.push({
+    x:Math.random()*W, y:Math.random()*H,
+    vx:(Math.random()-.5)*.35, vy:(Math.random()-.5)*.35,
+    r:Math.random()*1.8+.6
+  });
+  function draw(){
+    cx.clearRect(0,0,W,H);
+    const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#39d98a';
+    dots.forEach(d=>{
+      d.x += d.vx; d.y += d.vy;
+      if(d.x<0||d.x>W) d.vx *= -1;
+      if(d.y<0||d.y>H) d.vy *= -1;
+      cx.fillStyle = accent; cx.globalAlpha = .55;
+      cx.beginPath(); cx.arc(d.x, d.y, d.r, 0, 7); cx.fill();
+    });
+    cx.globalAlpha = 1;
+    for(let i=0;i<dots.length;i++) for(let j=i+1;j<dots.length;j++){
+      const dx = dots[i].x - dots[j].x, dy = dots[i].y - dots[j].y;
+      const dist = Math.sqrt(dx*dx+dy*dy);
+      if(dist < 140){
+        cx.strokeStyle = accent; cx.globalAlpha = .1 * (1 - dist/140);
+        cx.beginPath(); cx.moveTo(dots[i].x, dots[i].y); cx.lineTo(dots[j].x, dots[j].y); cx.stroke();
+      }
+    }
+    cx.globalAlpha = 1;
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+/* ================================================================
+   5. КАТАЛОГ ИГР
+   ================================================================ */
+const GAMES = [
+  {id:'snake', name:'Змейка', icon:'🐍', cat:'Аркада', desc:'Собирай еду, расти, не врезайся.'},
+  {id:'pong', name:'Понг', icon:'🏓', cat:'Аркада', desc:'Отбивай мяч ракеткой.'},
+  {id:'breakout', name:'Арканоид', icon:'🧱', cat:'Аркада', desc:'Разбивай кирпичи мячом.'},
+  {id:'tetris', name:'Тетрис', icon:'🟦', cat:'Головоломка', desc:'Складывай фигуры в линии.'},
+  {id:'flappy', name:'Flappy', icon:'🐦', cat:'Реакция', desc:'Пролетай между трубами.'},
+  {id:'2048', name:'2048', icon:'🔢', cat:'Головоломка', desc:'Собери плитку 2048.'},
+  {id:'tictactoe', name:'Крестики-нолики', icon:'❌', cat:'Логика', desc:'Против ИИ с блокировкой.'},
+  {id:'clicker', name:'Кликер', icon:'🖱️', cat:'Логика', desc:'Кликай и покупай улучшения.'},
+  {id:'cube3d', name:'3D Куб', icon:'🧊', cat:'3D', desc:'Вращающийся куб на Three.js.'},
+  {id:'snake3d', name:'3D Змейка', icon:'🐍', cat:'3D', desc:'Змейка из кубиков в 3D.'},
+  {id:'stars3d', name:'3D Звёзды', icon:'✨', cat:'3D', desc:'Полёт сквозь звёздное поле.'},
+  {id:'planet3d', name:'3D Планета', icon:'🌍', cat:'3D', desc:'Планета с орбитой луны.'},
+  {id:'ship3d', name:'3D Корабль', icon:'🚀', cat:'3D', desc:'Пролёт сквозь кольца.'},
+  {id:'maze3d', name:'3D Лабиринт', icon:'🏛️', cat:'3D', desc:'От первого лица, WASD.'}
+];
+
+const THREE_CDN = 'https://cdn.jsdelivr.net/npm/three@0.150.1/build/three.min.js';
+
+const GAME_CODE = {
+  snake: () => `<!DOCTYPE html><html><head><meta charset="utf-8"><style>html,body{margin:0;height:100%;display:grid;place-items:center;background:#0b0f14}canvas{background:#111a24;border-radius:10px}</style></head><body><canvas id="c" width="480" height="480"></canvas><script>const c=document.getElementById('c'),x=c.getContext('2d'),S=24,N=20;let snake,dir,food,score,speed,acc,last,alive;function spawn(){let p;do{p={x:Math.random()*N|0,y:Math.random()*N|0}}while(snake.some(s=>s.x==p.x&&s.y==p.y));return p}function reset(){snake=[{x:10,y:10}];dir={x:1,y:0};food=spawn();score=0;speed=8;acc=0;last=0;alive=true}reset();addEventListener('keydown',e=>{const k=e.key;if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(k))e.preventDefault();if(!alive&&k===' '){reset();return}if(k==='ArrowUp'&&dir.y===0)dir={x:0,y:-1};if(k==='ArrowDown'&&dir.y===0)dir={x:0,y:1};if(k==='ArrowLeft'&&dir.x===0)dir={x:-1,y:0};if(k==='ArrowRight'&&dir.x===0)dir={x:1,y:0}});function step(){if(!alive)return;const h={x:(snake[0].x+dir.x+N)%N,y:(snake[0].y+dir.y+N)%N};if(snake.some(s=>s.x===h.x&&s.y===h.y)){alive=false;return}snake.unshift(h);if(h.x===food.x&&h.y===food.y){score++;speed=Math.min(18,speed+.4);food=spawn()}else snake.pop()}function draw(){x.fillStyle='#111a24';x.fillRect(0,0,c.width,c.height);x.fillStyle='#ff5d5d';x.fillRect(food.x*S+2,food.y*S+2,S-4,S-4);snake.forEach((s,i)=>{x.fillStyle=i?'#39d98a':'#7cf7bd';x.fillRect(s.x*S+1,s.y*S+1,S-2,S-2)});x.fillStyle='#e6edf3';x.font='16px system-ui';x.fillText('Очки: '+score,10,22);if(!alive){x.fillStyle='#000b';x.fillRect(0,0,c.width,c.height);x.fillStyle='#fff';x.textAlign='center';x.font='28px system-ui';x.fillText('Игра окончена',c.width/2,c.height/2-10);x.font='16px system-ui';x.fillText('Пробел — заново',c.width/2,c.height/2+26);x.textAlign='left'}}function loop(t){if(!last)last=t;acc+=t-last;last=t;const iv=1000/speed;while(acc>iv){acc-=iv;step()}draw();requestAnimationFrame(loop)}requestAnimationFrame(loop);<\/script></body></html>`,
+  pong: () => `<!DOCTYPE html><html><head><meta charset="utf-8"><style>html,body{margin:0;height:100%;display:grid;place-items:center;background:#0b0f14}canvas{background:#0f1a24;border-radius:10px;cursor:none}</style></head><body><canvas id="c" width="640" height="420"></canvas><script>const c=document.getElementById('c'),x=c.getContext('2d'),W=640,H=420;let paddle,ai,ball,score,alive;function reset(){paddle=H/2-40;ai=H/2-40;ball={x:W/2,y:H/2,vx:4.5,vy:3,r:8};score=0;alive=true}reset();const cl=(v,a,b)=>v<a?a:v>b?b:v;c.addEventListener('mousemove',e=>{const r=c.getBoundingClientRect();paddle=e.clientY-r.top-40});c.addEventListener('click',()=>{if(!alive)reset()});function step(){if(!alive)return;paddle=cl(paddle,0,H-80);ball.x+=ball.vx;ball.y+=ball.vy;if(ball.y<ball.r||ball.y>H-ball.r)ball.vy*=-1;if(ball.x-ball.r<30&&ball.x>20&&ball.y>paddle&&ball.y<paddle+80&&ball.vx<0){ball.vx*=-1.06;ball.vy+=(ball.y-(paddle+40))*0.05;score++}ai+=cl((ball.y-40)-ai,-3.4,3.4);ai=cl(ai,0,H-80);if(ball.x+ball.r>W-30&&ball.x<W-20&&ball.y>ai&&ball.y<ai+80&&ball.vx>0){ball.vx*=-1.06;ball.vy+=(ball.y-(ai+40))*0.05}ball.vx=cl(ball.vx,-13,13);ball.vy=cl(ball.vy,-9,9);if(ball.x<-30||ball.x>W+30)alive=false}function draw(){x.fillStyle='#0f1a24';x.fillRect(0,0,W,H);x.setLineDash([6,10]);x.strokeStyle='#2a3a4a';x.beginPath();x.moveTo(W/2,0);x.lineTo(W/2,H);x.stroke();x.setLineDash([]);x.fillStyle='#39d98a';x.fillRect(20,paddle,10,80);x.fillStyle='#ff5d5d';x.fillRect(W-30,ai,10,80);x.fillStyle='#fff';x.beginPath();x.arc(ball.x,ball.y,ball.r,0,7);x.fill();x.font='20px system-ui';x.fillText('Отбито: '+score,20,32);if(!alive){x.fillStyle='#000a';x.fillRect(0,0,W,H);x.fillStyle='#fff';x.textAlign='center';x.font='28px system-ui';x.fillText('Мяч улетел!',W/2,H/2-8);x.font='16px system-ui';x.fillText('Клик — заново',W/2,H/2+26);x.textAlign='left'}}function loop(){step();draw();requestAnimationFrame(loop)}loop();<\/script></body></html>`,
+  breakout: () => `<!DOCTYPE html><html><head><meta charset="utf-8"><style>html,body{margin:0;height:100%;display:grid;place-items:center;background:#0b0f14}canvas{background:#0f1a24;border-radius:10px;cursor:none}</style></head><body><canvas id="c" width="560" height="420"></canvas><script>const c=document.getElementById('c'),x=c.getContext('2d'),W=560,H=420;let paddle,ball,bricks,score,lives,alive;function reset(){paddle=W/2-50;ball={x:W/2,y:H-60,vx:4,vy:-5,r:8};bricks=[];for(let r=0;r<5;r++)for(let col=0;col<9;col++)bricks.push({x:20+col*58,y:50+r*26,w:52,h:20});score=0;lives=3;alive=true}reset();addEventListener('mousemove',e=>{const r=c.getBoundingClientRect();paddle=e.clientX-r.left-50});addEventListener('click',()=>{if(!alive)reset()});const cl=(v,a,b)=>v<a?a:v>b?b:v;function step(){if(!alive)return;paddle=cl(paddle,0,W-100);ball.x+=ball.vx;ball.y+=ball.vy;if(ball.x<ball.r||ball.x>W-ball.r)ball.vx*=-1;if(ball.y<ball.r)ball.vy*=-1;if(ball.y>H-40&&ball.y<H-20&&ball.x>paddle&&ball.x<paddle+100&&ball.vy>0){ball.vy*=-1;ball.vx+=(ball.x-(paddle+50))*0.08}for(let i=bricks.length-1;i>=0;i--){const b=bricks[i];if(ball.x>b.x-ball.r&&ball.x<b.x+b.w+ball.r&&ball.y>b.y-ball.r&&ball.y<b.y+b.h+ball.r){bricks.splice(i,1);ball.vy*=-1;score+=10;break}}if(ball.y>H+20){lives--;if(lives<=0)alive=false;else ball={x:W/2,y:H-60,vx:4,vy:-5,r:8}}if(!bricks.length)alive=false}function draw(){x.fillStyle='#0f1a24';x.fillRect(0,0,W,H);bricks.forEach((b,i)=>{x.fillStyle=i%3===0?'#39d98a':i%3===1?'#4dabf7':'#ffc857';x.fillRect(b.x,b.y,b.w,b.h)});x.fillStyle='#7cf7bd';x.fillRect(paddle,H-20,100,10);x.fillStyle='#fff';x.beginPath();x.arc(ball.x,ball.y,ball.r,0,7);x.fill();x.font='18px system-ui';x.fillStyle='#e6edf3';x.fillText('Очки: '+score+'   Жизни: '+lives,16,26);if(!alive){x.fillStyle='#000a';x.fillRect(0,0,W,H);x.fillStyle='#fff';x.textAlign='center';x.font='28px system-ui';x.fillText(bricks.length?'Игра окончена':'Победа!',W/2,H/2-8);x.font='16px system-ui';x.fillText('Клик — заново',W/2,H/2+26);x.textAlign='left'}}function loop(){step();draw();requestAnimationFrame(loop)}loop();<\/script></body></html>`,
+  tetris: () => `<!DOCTYPE html><html><head><meta charset="utf-8"><style>html,body{margin:0;height:100%;display:grid;place-items:center;background:#0b0f14}canvas{background:#0f1a24;border-radius:10px}</style></head><body><canvas id="c" width="360" height="480"></canvas><script>const c=document.getElementById('c'),x=c.getContext('2d'),COLS=10,ROWS=20,S=24;const SHAPES=[[[1,1,1,1]],[[1,1],[1,1]],[[1,1,1],[0,1,0]],[[1,1,1],[1,0,0]],[[1,1,1],[0,0,1]],[[1,1,0],[0,1,1]],[[0,1,1],[1,1,0]]];let grid,cur,px,py,drop,acc,last,score,alive,bag;const empty=()=>{const g=[];for(let r=0;r<ROWS;r++){const row=[];for(let i=0;i<COLS;i++)row.push(0);g.push(row)}return g};function pick(){if(!bag||!bag.length){bag=[0,1,2,3,4,5,6];bag.sort(()=>Math.random()-.5)}const i=bag.pop();return{s:SHAPES[i].map(r=>r.slice())}}function spawn(){const p=pick();cur=p.s;px=Math.floor((COLS-cur[0].length)/2);py=0;if(hit(px,py,cur))alive=false}function hit(nx,ny,sh){for(let r=0;r<sh.length;r++)for(let col=0;col<sh[r].length;col++){if(!sh[r][col])continue;const X=nx+col,Y=ny+r;if(X<0||X>=COLS||Y>=ROWS)return true;if(Y>=0&&grid[Y][X])return true}return false}function lock(){for(let r=0;r<cur.length;r++)for(let col=0;col<cur[r].length;col++)if(cur[r][col]&&py+r>=0)grid[py+r][px+col]=1;let cleared=0;for(let r2=ROWS-1;r2>=0;r2--){let full=true;for(let i=0;i<COLS;i++)if(!grid[r2][i])full=false;if(full){grid.splice(r2,1);const row=[];for(let k=0;k<COLS;k++)row.push(0);grid.unshift(row);cleared++;r2++}}score+=[0,40,100,300,1200][cleared];drop=Math.max(120,700-score/3);spawn()}function rot(){const m=[];for(let i=0;i<cur[0].length;i++){const row=[];for(let j=cur.length-1;j>=0;j--)row.push(cur[j][i]);m.push(row)}if(!hit(px,py,m))cur=m}function reset(){grid=empty();score=0;drop=700;acc=0;last=0;alive=true;bag=null;spawn()}reset();addEventListener('keydown',e=>{if(!alive&&e.key===' '){reset();return}if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown',' '].includes(e.key))e.preventDefault();if(e.key==='ArrowLeft'&&!hit(px-1,py,cur))px--;if(e.key==='ArrowRight'&&!hit(px+1,py,cur))px++;if(e.key==='ArrowDown'&&!hit(px,py+1,cur))py++;if(e.key==='ArrowUp')rot();if(e.key===' '){while(!hit(px,py+1,cur))py++;lock()}});function step(){if(!alive)return;if(!hit(px,py+1,cur))py++;else lock()}function dc(X,Y,col){x.fillStyle=col;x.fillRect(X*S+1,Y*S+1,S-2,S-2)}function draw(){x.fillStyle='#0f1a24';x.fillRect(0,0,c.width,c.height);for(let r=0;r<ROWS;r++)for(let col=0;col<COLS;col++)if(grid[r][col])dc(col,r,'#39d98a');if(cur)for(let r2=0;r2<cur.length;r2++)for(let c2=0;c2<cur[r2].length;c2++)if(cur[r2][c2]){const Y=py+r2,X=px+c2;if(Y>=0)dc(X,Y,'#7cf7bd')}x.fillStyle='#e6edf3';x.font='18px system-ui';x.fillText('Очки: '+score,10,26);if(!alive){x.fillStyle='#000a';x.fillRect(0,0,c.width,c.height);x.fillStyle='#fff';x.textAlign='center';x.font='26px system-ui';x.fillText('Игра окончена',c.width/2,c.height/2-8);x.font='16px system-ui';x.fillText('Пробел — заново',c.width/2,c.height/2+26);x.textAlign='left'}}function loop(t){if(!last)last=t;acc+=t-last;last=t;if(acc>drop){acc=0;step()}draw();requestAnimationFrame(loop)}requestAnimationFrame(loop);<\/script></body></html>`,
+  flappy: () => `<!DOCTYPE html><html><head><meta charset="utf-8"><style>html,body{margin:0;height:100%;display:grid;place-items:center;background:#0b0f14}canvas{border-radius:10px;cursor:pointer}</style></head><body><canvas id="c" width="400" height="560"></canvas><script>const c=document.getElementById('c'),x=c.getContext('2d'),W=400,H=560,G=0.45,JUMP=-7.5,PW=60,GAP=150,SPEED=2.4;let bird,pipes,score,alive,spawnT;function reset(){bird={y:H/2,v:0};pipes=[];score=0;alive=true;spawnT=0}reset();function flap(){if(!alive){reset();return}bird.v=JUMP}addEventListener('keydown',e=>{if(e.key===' '||e.key==='ArrowUp'){e.preventDefault();flap()}});c.addEventListener('mousedown',flap);function step(){if(!alive)return;bird.v+=G;bird.y+=bird.v;if(bird.y<0||bird.y>H){alive=false;return}spawnT++;if(spawnT>90){spawnT=0;const top=60+Math.random()*(H-GAP-140);pipes.push({x:W,top})}pipes.forEach(p=>p.x-=SPEED);pipes=pipes.filter(p=>p.x>-PW);for(const p of pipes){if(p.x<50&&p.x+PW>30){if(bird.y<p.top||bird.y>p.top+GAP){alive=false;return}}if(!p.passed&&p.x+PW<30){p.passed=true;score++}}}function draw(){const g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,'#87ceeb');g.addColorStop(1,'#b0e0f0');x.fillStyle=g;x.fillRect(0,0,W,H);pipes.forEach(p=>{x.fillStyle='#2e8b57';x.fillRect(p.x,0,PW,p.top);x.fillRect(p.x,p.top+GAP,PW,H)});x.fillStyle='#ffd93d';x.beginPath();x.arc(40,bird.y,14,0,7);x.fill();x.fillStyle='#000';x.beginPath();x.arc(45,bird.y-4,3,0,7);x.fill();x.fillStyle='#fff';x.font='bold 28px system-ui';x.textAlign='center';x.fillText(score,W/2,50);x.textAlign='left';if(!alive){x.fillStyle='#0007';x.fillRect(0,0,W,H);x.fillStyle='#fff';x.textAlign='center';x.font='26px system-ui';x.fillText('Игра окончена',W/2,H/2-10);x.font='16px system-ui';x.fillText('Клик / Пробел — заново',W/2,H/2+24);x.textAlign='left'}}function loop(){step();draw();requestAnimationFrame(loop)}loop();<\/script></body></html>`,
+  '2048': () => `<!DOCTYPE html><html><head><meta charset="utf-8"><style>html,body{margin:0;height:100%;display:grid;place-items:center;background:#0b0f14}canvas{background:#1a2330;border-radius:12px}</style></head><body><canvas id="c" width="440" height="500"></canvas><script>const c=document.getElementById('c'),x=c.getContext('2d'),N=4,S=100,PAD=10,OFF=20;let grid,score,alive,won;const empty=()=>{const g=[];for(let r=0;r<N;r++){const row=[];for(let i=0;i<N;i++)row.push(0);g.push(row)}return g};function reset(){grid=empty();score=0;alive=true;won=false;add();add()}function add(){const free=[];for(let r=0;r<N;r++)for(let col=0;col<N;col++)if(!grid[r][col])free.push([r,col]);if(!free.length)return;const p=free[Math.floor(Math.random()*free.length)];grid[p[0]][p[1]]=Math.random()<0.9?2:4}function slide(row){const a=row.filter(v=>v);for(let i=0;i<a.length-1;i++)if(a[i]===a[i+1]){a[i]*=2;score+=a[i];if(a[i]===2048)won=true;a.splice(i+1,1)}while(a.length<N)a.push(0);return a}function move(d){if(!alive)return;const before=JSON.stringify(grid);if(d==='left')grid=grid.map(r=>slide(r));if(d==='right')grid=grid.map(r=>slide(r.slice().reverse()).reverse());if(d==='up'){for(let col=0;col<N;col++){const colv=grid.map(r=>r[col]);const s=slide(colv);for(let r=0;r<N;r++)grid[r][col]=s[r]}}if(d==='down'){for(let col2=0;col2<N;col2++){const cv=grid.map(r=>r[col2]).reverse();const s2=slide(cv).reverse();for(let r2=0;r2<N;r2++)grid[r2][col2]=s2[r2]}}if(JSON.stringify(grid)!==before){add();check()}}function check(){for(let r=0;r<N;r++)for(let col=0;col<N;col++){if(!grid[r][col])return;if(col<N-1&&grid[r][col]===grid[r][col+1])return;if(r<N-1&&grid[r][col]===grid[r+1][col])return}alive=false}addEventListener('keydown',e=>{const m={ArrowLeft:'left',ArrowRight:'right',ArrowUp:'up',ArrowDown:'down'}[e.key];if(m){e.preventDefault();move(m)}});const COL={2:'#eee4da',4:'#ede0c8',8:'#f2b179',16:'#f59563',32:'#f67c5f',64:'#f65e3b',128:'#edcf72',256:'#edcc61',512:'#edc850',1024:'#edc53f',2048:'#edc22e'};function draw(){x.fillStyle='#1a2330';x.fillRect(0,0,c.width,c.height);x.fillStyle='#e6edf3';x.font='bold 24px system-ui';x.fillText('Очки: '+score,OFF,32);for(let r=0;r<N;r++)for(let col=0;col<N;col++){const X=OFF+col*(S+PAD),Y=50+r*(S+PAD),v=grid[r][col];x.fillStyle=v?(COL[v]||'#3c3a32'):'#2b3846';x.fillRect(X,Y,S,S);if(v){x.fillStyle=v<=4?'#776e65':'#fff';x.font='bold '+(v>=1024?26:v>=128?32:38)+'px system-ui';x.textAlign='center';x.textBaseline='middle';x.fillText(v,X+S/2,Y+S/2);x.textAlign='left';x.textBaseline='alphabetic'}}if(!alive||won){x.fillStyle='#000a';x.fillRect(0,0,c.width,c.height);x.fillStyle='#fff';x.textAlign='center';x.font='30px system-ui';x.fillText(won?'Победа!':'Ходов нет',c.width/2,c.height/2);x.textAlign='left'}}reset();(function loop(){draw();requestAnimationFrame(loop)})();<\/script></body></html>`,
+  tictactoe: () => `<!DOCTYPE html><html><head><meta charset="utf-8"><style>html,body{margin:0;height:100%;display:grid;place-items:center;background:#0b0f14;font-family:system-ui;color:#e6edf3;user-select:none}canvas{background:#131c27;border-radius:14px;cursor:pointer}</style></head><body><canvas id="c" width="400" height="480"></canvas><script>const c=document.getElementById('c'),x=c.getContext('2d'),S=110,OFF=35,W=400;let board,winner,msg;function reset(){board=['','','','','','','','',''];winner=null;msg='Ход X'}reset();const L=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];function checkOn(b){for(const [a,bb,d] of L)if(b[a]&&b[a]===b[bb]&&b[a]===b[d])return b[a];return b.every(v=>v)?'draw':null}function aiMove(){const free=[];for(let i=0;i<9;i++)if(!board[i])free.push(i);for(let p=0;p<2;p++){const who=p?'X':'O';for(const f of free){const t=board.slice();t[f]=who;if(checkOn(t)===who){board[f]='O';return}}}board[free[Math.floor(Math.random()*free.length)]]='O'}c.addEventListener('click',e=>{const r=c.getBoundingClientRect();const mx=e.clientX-r.left,my=e.clientY-r.top;if(my>390){reset();return}if(winner)return;const col=Math.floor((mx-OFF)/S),row=Math.floor((my-OFF)/S);if(col<0||col>2||row<0||row>2)return;const i=row*3+col;if(board[i])return;board[i]='X';winner=checkOn(board);if(!winner){aiMove();winner=checkOn(board)}msg=winner?(winner==='draw'?'Ничья!':'Победил '+winner):'Ход X'});function draw(){x.fillStyle='#131c27';x.fillRect(0,0,W,480);x.strokeStyle='#2a3b50';x.lineWidth=4;for(let i=1;i<3;i++){x.beginPath();x.moveTo(OFF+i*S,OFF);x.lineTo(OFF+i*S,OFF+3*S);x.stroke();x.beginPath();x.moveTo(OFF,OFF+i*S);x.lineTo(OFF+3*S,OFF+i*S);x.stroke()}x.lineWidth=6;x.lineCap='round';for(let j=0;j<9;j++){const v=board[j];if(!v)continue;const col=j%3,row=Math.floor(j/3);const X=OFF+col*S+S/2,Y=OFF+row*S+S/2;if(v==='X'){x.strokeStyle='#39d98a';x.beginPath();x.moveTo(X-30,Y-30);x.lineTo(X+30,Y+30);x.moveTo(X+30,Y-30);x.lineTo(X-30,Y+30);x.stroke()}else{x.strokeStyle='#ff5d5d';x.beginPath();x.arc(X,Y,30,0,7);x.stroke()}}x.fillStyle='#e6edf3';x.font='20px system-ui';x.textAlign='center';x.fillText(msg||'',W/2,420);x.font='14px system-ui';x.fillStyle='#7d90a5';x.fillText('Клик по полю — ход. Клик снизу — заново.',W/2,455);x.textAlign='left'}(function loop(){draw();requestAnimationFrame(loop)})();<\/script></body></html>`,
+  clicker: () => `<!DOCTYPE html><html><head><meta charset="utf-8"><style>html,body{margin:0;height:100%;display:grid;place-items:center;background:#0b0f14;font-family:system-ui;color:#e6edf3;user-select:none}canvas{background:#131c27;border-radius:16px;cursor:pointer}</style></head><body><canvas id="c" width="440" height="520"></canvas><script>const c=document.getElementById('c'),x=c.getContext('2d');let score=0,clickPower=1,autoPower=0,autoCost=25,clickCost=10;let floats=[],autoAcc=0,last=0,pulse=0;c.addEventListener('click',e=>{const r=c.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top;if(mx>20&&my>420&&mx<220&&my<470){if(score>=clickCost){score-=clickCost;clickPower++;clickCost=Math.floor(clickCost*1.7)}return}if(mx>240&&my>420&&mx<420&&my<470){if(score>=autoCost){score-=autoCost;autoPower++;autoCost=Math.floor(autoCost*1.6)}return}score+=clickPower;floats.push({x:mx,y:my,a:1,v:1.3});pulse=1});function loop(t){if(!last)last=t;const dt=(t-last)/1000;last=t;autoAcc+=dt*autoPower;while(autoAcc>=1){autoAcc--;score+=1}floats.forEach(f=>{f.y-=f.v;f.a-=0.02});floats=floats.filter(f=>f.a>0);pulse*=0.92;draw();requestAnimationFrame(loop)}function draw(){x.fillStyle='#131c27';x.fillRect(0,0,c.width,c.height);const R=90+pulse*14;x.fillStyle='#39d98a';x.globalAlpha=.25+pulse*.4;x.beginPath();x.arc(220,200,R,0,7);x.fill();x.globalAlpha=1;x.fillStyle='#39d98a';x.beginPath();x.arc(220,200,90,0,7);x.fill();x.fillStyle='#0b0f14';x.font='bold 34px system-ui';x.textAlign='center';x.fillText('ТЫК',220,212);x.fillStyle='#e6edf3';x.font='bold 26px system-ui';x.fillText('Монет: '+Math.floor(score),220,60);x.font='15px system-ui';x.fillStyle='#7d90a5';x.fillText('За клик: '+clickPower+'    Авто: '+autoPower+'/с',220,90);x.fillStyle='#1d2a38';x.fillRect(20,420,200,50);x.fillRect(240,420,180,50);x.fillStyle='#e6edf3';x.font='14px system-ui';x.fillText('Улучшить клик ('+clickCost+')',120,450);x.fillText('Купить авто ('+autoCost+')',330,450);floats.forEach(f=>{x.globalAlpha=f.a;x.fillStyle='#39d98a';x.font='bold 18px system-ui';x.fillText('+'+clickPower,f.x,f.y);x.globalAlpha=1});x.textAlign='left'}loop(0);<\/script></body></html>`,
+
+  cube3d: () => `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+html,body{margin:0;height:100%;overflow:hidden;background:#0b0f14;font-family:system-ui;color:#e6edf3}
+#info{position:fixed;top:14px;left:14px;font-size:12px;color:#7d90a5;z-index:10}
+</style></head><body>
+<div id="info">3D Куб · Three.js</div>
+<script src="${THREE_CDN}"><\/script>
+<script>
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0b0f14);
+const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = true;
+document.body.appendChild(renderer.domElement);
+const cube = new THREE.Mesh(
+  new THREE.BoxGeometry(1.2, 1.2, 1.2),
+  new THREE.MeshStandardMaterial({color:0x39d98a, metalness:0.6, roughness:0.3})
+);
+cube.castShadow = true;
+scene.add(cube);
+const floor = new THREE.Mesh(
+  new THREE.PlaneGeometry(20, 20),
+  new THREE.MeshStandardMaterial({color:0x16202b, roughness:0.9})
+);
+floor.rotation.x = -Math.PI / 2;
+floor.position.y = -1.5;
+floor.receiveShadow = true;
+scene.add(floor);
+scene.add(new THREE.AmbientLight(0x404050, 1));
+const light = new THREE.DirectionalLight(0xffffff, 1.5);
+light.position.set(4, 6, 5);
+light.castShadow = true;
+scene.add(light);
+const rim = new THREE.PointLight(0x4dabf7, 2);
+rim.position.set(-3, 2, -3);
+scene.add(rim);
+camera.position.set(0, 0, 3.5);
+let t = 0;
+function animate(){
+  requestAnimationFrame(animate);
+  t += 0.01;
+  cube.rotation.x = t * 0.7;
+  cube.rotation.y = t;
+  cube.position.y = Math.sin(t * 2) * 0.15;
+  renderer.render(scene, camera);
+}
+animate();
+addEventListener('resize', ()=>{
+  camera.aspect = innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+<\/script></body></html>`,
+  snake3d: () => `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+html,body{margin:0;height:100%;overflow:hidden;background:#0a1418}
+#hud{position:fixed;top:14px;left:14px;font:14px system-ui;color:#39d98a;z-index:10;text-shadow:0 0 10px #000}
+#hud b{color:#fff}
+</style></head><body>
+<div id="hud">Очки: <b id="score">0</b></div>
+<script src="${THREE_CDN}"><\/script>
+<script>
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0a1418);
+scene.fog = new THREE.Fog(0x0a1418, 18, 32);
+const camera = new THREE.PerspectiveCamera(60, innerWidth/innerHeight, 0.1, 100);
+camera.position.set(0, 20, 16);
+camera.lookAt(0, 0, 0);
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth, innerHeight);
+document.body.appendChild(renderer.domElement);
+scene.add(new THREE.AmbientLight(0x808090, 0.9));
+const dir = new THREE.DirectionalLight(0xffffff, 1.2);
+dir.position.set(6, 12, 6);
+scene.add(dir);
+scene.add(new THREE.GridHelper(22, 22, 0x39d98a, 0x1e2b3a));
+const N = 20, HALF = N/2;
+let snake, dir3, food, score, speed, acc, last, alive;
+const snakeGroup = new THREE.Group();
+scene.add(snakeGroup);
+const foodMesh = new THREE.Mesh(
+  new THREE.BoxGeometry(0.75, 0.75, 0.75),
+  new THREE.MeshStandardMaterial({color:0xff5d5d, emissive:0x552020})
+);
+foodMesh.position.y = 0.5;
+scene.add(foodMesh);
+function spawnFood(){
+  let p;
+  do { p = {x: Math.floor(Math.random()*N - HALF), z: Math.floor(Math.random()*N - HALF)}; }
+  while(snake.some(s => s.x === p.x && s.z === p.z));
+  return p;
+}
+function addSeg(x, z, head){
+  const m = new THREE.Mesh(
+    new THREE.BoxGeometry(0.85, 0.85, 0.85),
+    new THREE.MeshStandardMaterial({color: head ? 0x7cf7bd : 0x39d98a})
+  );
+  m.position.set(x, 0.5, z);
+  snakeGroup.add(m);
+}
+function reset(){
+  snake = [{x:0, z:0}];
+  dir3 = {x:0, z:-1};
+  food = spawnFood();
+  score = 0; speed = 6; acc = 0; last = 0; alive = true;
+  while(snakeGroup.children.length) snakeGroup.remove(snakeGroup.children[0]);
+  addSeg(0, 0, true);
+  foodMesh.position.set(food.x, 0.5, food.z);
+  document.getElementById('score').textContent = 0;
+}
+addEventListener('keydown', e=>{
+  if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key)) e.preventDefault();
+  if(!alive && e.key === ' '){ reset(); return; }
+  const k = e.key;
+  if((k === 'ArrowUp' || k === 'w' || k === 'ц') && dir3.z === 0) dir3 = {x:0, z:-1};
+  if((k === 'ArrowDown' || k === 's' || k === 'ы') && dir3.z === 0) dir3 = {x:0, z:1};
+  if((k === 'ArrowLeft' || k === 'a' || k === 'ф') && dir3.x === 0) dir3 = {x:-1, z:0};
+  if((k === 'ArrowRight' || k === 'd' || k === 'в') && dir3.x === 0) dir3 = {x:1, z:0};
+});
+function step(){
+  if(!alive) return;
+  const hx = Math.max(-HALF+1, Math.min(HALF-1, snake[0].x + dir3.x));
+  const hz = Math.max(-HALF+1, Math.min(HALF-1, snake[0].z + dir3.z));
+  const h = {x:hx, z:hz};
+  if(snake.some(s => s.x === h.x && s.z === h.z)){ alive = false; return; }
+  snake.unshift(h);
+  addSeg(h.x, h.z, false);
+  if(h.x === food.x && h.z === food.z){
+    score++;
+    document.getElementById('score').textContent = score;
+    speed = Math.min(15, speed + 0.4);
+    food = spawnFood();
+    foodMesh.position.set(food.x, 0.5, food.z);
+  } else {
+    snake.pop();
+    snakeGroup.remove(snakeGroup.children[0]);
+  }
+  snakeGroup.children.forEach((c, i) => {
+    c.material.color.set(i === 0 ? 0x7cf7bd : 0x39d98a);
+  });
+}
+function animate(t){
+  if(!last) last = t;
+  acc += t - last; last = t;
+  const iv = 1000 / speed;
+  while(acc > iv){ acc -= iv; step(); }
+  renderer.render(scene, camera);
+  requestAnimationFrame(animate);
+}
+reset();
+requestAnimationFrame(animate);
+addEventListener('resize', ()=>{
+  camera.aspect = innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+<\/script></body></html>`,
+  stars3d: () => `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+html,body{margin:0;height:100%;overflow:hidden;background:#000;cursor:crosshair}
+</style></head><body>
+<script src="${THREE_CDN}"><\/script>
+<script>
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(80, innerWidth/innerHeight, 0.1, 2000);
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth, innerHeight);
+document.body.appendChild(renderer.domElement);
+const N = 800, RANGE = 400;
+const positions = new Float32Array(N * 3);
+const colors = new Float32Array(N * 3);
+for(let i=0;i<N;i++){
+  positions[i*3]   = (Math.random() - 0.5) * RANGE;
+  positions[i*3+1] = (Math.random() - 0.5) * RANGE;
+  positions[i*3+2] = Math.random() * RANGE - RANGE;
+  const c = Math.random();
+  colors[i*3]   = 0.3 + c * 0.7;
+  colors[i*3+1] = 0.7 + c * 0.3;
+  colors[i*3+2] = 0.9 + c * 0.1;
+}
+const geo = new THREE.BufferGeometry();
+geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+const mat = new THREE.PointsMaterial({ size:1.6, vertexColors:true, transparent:true, opacity:0.9 });
+scene.add(new THREE.Points(geo, mat));
+let speed = 0.5, targetSpeed = 0.5;
+addEventListener('wheel', e=>{ targetSpeed = Math.max(0.2, Math.min(4, targetSpeed + e.deltaY * -0.001)); });
+addEventListener('mousemove', e=>{
+  camera.rotation.z = (e.clientX / innerWidth - 0.5) * 0.4;
+  camera.rotation.x = (e.clientY / innerHeight - 0.5) * 0.4;
+});
+function animate(){
+  requestAnimationFrame(animate);
+  speed += (targetSpeed - speed) * 0.05;
+  const pos = geo.attributes.position.array;
+  for(let i=0;i<N;i++){
+    pos[i*3+2] += speed;
+    if(pos[i*3+2] > 200){
+      pos[i*3+2] = -RANGE;
+      pos[i*3]   = (Math.random() - 0.5) * RANGE;
+      pos[i*3+1] = (Math.random() - 0.5) * RANGE;
+    }
+  }
+  geo.attributes.position.needsUpdate = true;
+  renderer.render(scene, camera);
+}
+animate();
+addEventListener('resize', ()=>{
+  camera.aspect = innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+<\/script></body></html>`,
+  planet3d: () => `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+html,body{margin:0;height:100%;overflow:hidden;background:#000308}
+</style></head><body>
+<script src="${THREE_CDN}"><\/script>
+<script>
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(60, innerWidth/innerHeight, 0.1, 2000);
+camera.position.set(0, 3, 9);
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth, innerHeight);
+document.body.appendChild(renderer.domElement);
+const skyGeo = new THREE.BufferGeometry();
+const skyPos = new Float32Array(2000 * 3);
+for(let i=0;i<2000;i++){
+  skyPos[i*3]   = (Math.random() - 0.5) * 800;
+  skyPos[i*3+1] = (Math.random() - 0.5) * 800;
+  skyPos[i*3+2] = (Math.random() - 0.5) * 800;
+}
+skyGeo.setAttribute('position', new THREE.BufferAttribute(skyPos, 3));
+scene.add(new THREE.Points(skyGeo, new THREE.PointsMaterial({size:0.6, color:0xffffff})));
+scene.add(new THREE.AmbientLight(0x404060, 0.8));
+const sun = new THREE.DirectionalLight(0xfff5e0, 1.6);
+sun.position.set(5, 3, 5);
+scene.add(sun);
+const planet = new THREE.Mesh(
+  new THREE.SphereGeometry(2, 48, 32),
+  new THREE.MeshStandardMaterial({ color: 0x4dabf7, roughness: 0.85, emissive: 0x0a1a3a, emissiveIntensity: 0.3 })
+);
+scene.add(planet);
+for(let i=0;i<10;i++){
+  const theta = Math.random() * Math.PI * 2;
+  const phi = Math.acos(2 * Math.random() - 1);
+  const patch = new THREE.Mesh(
+    new THREE.SphereGeometry(0.25 + Math.random() * 0.35, 12, 8),
+    new THREE.MeshStandardMaterial({color: 0x39d98a})
+  );
+  patch.position.set(
+    2.01 * Math.sin(phi) * Math.cos(theta),
+    2.01 * Math.cos(phi),
+    2.01 * Math.sin(phi) * Math.sin(theta)
+  );
+  planet.add(patch);
+}
+const moon = new THREE.Mesh(
+  new THREE.SphereGeometry(0.5, 24, 16),
+  new THREE.MeshStandardMaterial({color: 0xc0c0c0})
+);
+scene.add(moon);
+let t = 0;
+function animate(){
+  requestAnimationFrame(animate);
+  t += 0.005;
+  planet.rotation.y += 0.004;
+  moon.position.x = Math.cos(t * 2) * 3.4;
+  moon.position.z = Math.sin(t * 2) * 3.4;
+  renderer.render(scene, camera);
+}
+animate();
+addEventListener('resize', ()=>{
+  camera.aspect = innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+<\/script></body></html>`,
+  ship3d: () => `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+html,body{margin:0;height:100%;overflow:hidden;background:#000308}
+#hud{position:fixed;top:14px;left:14px;font:14px system-ui;color:#4dabf7;z-index:10}
+</style></head><body>
+<div id="hud">Пролётов: <b id="score" style="color:#fff">0</b></div>
+<script src="${THREE_CDN}"><\/script>
+<script>
+const scene = new THREE.Scene();
+scene.fog = new THREE.Fog(0x000308, 30, 90);
+const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 200);
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth, innerHeight);
+document.body.appendChild(renderer.domElement);
+scene.add(new THREE.AmbientLight(0x506080, 1));
+const L = new THREE.PointLight(0x4dabf7, 2, 50);
+L.position.set(0, 0, 5);
+scene.add(L);
+const skyGeo = new THREE.BufferGeometry();
+const skyPos = new Float32Array(600 * 3);
+for(let i=0;i<600;i++){
+  skyPos[i*3]   = (Math.random() - 0.5) * 120;
+  skyPos[i*3+1] = (Math.random() - 0.5) * 120;
+  skyPos[i*3+2] = Math.random() * -200;
+}
+skyGeo.setAttribute('position', new THREE.BufferAttribute(skyPos, 3));
+scene.add(new THREE.Points(skyGeo, new THREE.PointsMaterial({size:0.4, color:0xffffff})));
+const rings = [];
+const ringColors = [0x39d98a, 0x4dabf7, 0xa78bfa, 0xffc857];
+function spawnRing(){
+  const color = ringColors[Math.floor(Math.random() * ringColors.length)];
+  const ring = new THREE.Mesh(
+    new THREE.TorusGeometry(2.2, 0.15, 12, 40),
+    new THREE.MeshStandardMaterial({color, emissive: color, emissiveIntensity: 0.6})
+  );
+  ring.position.set((Math.random() - 0.5) * 6, (Math.random() - 0.5) * 6, -80 - Math.random() * 40);
+  ring.userData.passed = false;
+  scene.add(ring);
+  rings.push(ring);
+}
+for(let i=0;i<4;i++) spawnRing();
+let score = 0;
+let targetX = 0, targetY = 0, shipX = 0, shipY = 0;
+addEventListener('mousemove', e=>{
+  targetX = (e.clientX / innerWidth - 0.5) * 6;
+  targetY = -(e.clientY / innerHeight - 0.5) * 6;
+});
+const ship = new THREE.Mesh(
+  new THREE.ConeGeometry(0.4, 1.2, 4),
+  new THREE.MeshStandardMaterial({color: 0x7cf7bd, emissive: 0x1a6e4a})
+);
+ship.rotation.x = -Math.PI / 2;
+ship.position.z = -1;
+scene.add(ship);
+function animate(){
+  requestAnimationFrame(animate);
+  shipX += (targetX - shipX) * 0.1;
+  shipY += (targetY - shipY) * 0.1;
+  camera.position.x = shipX;
+  camera.position.y = shipY;
+  ship.position.x = shipX;
+  ship.position.y = shipY;
+  for(let i=rings.length-1;i>=0;i--){
+    const r = rings[i];
+    r.position.z += 0.6;
+    r.rotation.z += 0.02;
+    if(!r.userData.passed && r.position.z > -2 && r.position.z < 2){
+      const dx = r.position.x - shipX, dy = r.position.y - shipY;
+      if(Math.sqrt(dx*dx + dy*dy) < 2.0){
+        r.userData.passed = true;
+        score++;
+        document.getElementById('score').textContent = score;
+      }
+    }
+    if(r.position.z > 8){
+      scene.remove(r);
+      rings.splice(i, 1);
+      spawnRing();
+    }
+  }
+  renderer.render(scene, camera);
+}
+animate();
+addEventListener('resize', ()=>{
+  camera.aspect = innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+<\/script></body></html>`,
+  maze3d: () => `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+html,body{margin:0;height:100%;overflow:hidden;background:#05080b;cursor:crosshair}
+#cross{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+width:8px;height:8px;background:#39d98a;border-radius:50%;
+box-shadow:0 0 14px #39d98a;z-index:10;pointer-events:none}
+#info{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);
+font:12px system-ui;color:#7d90a5;z-index:10}
+</style></head><body>
+<div id="cross"></div>
+<div id="info">WASD / стрелки — идти · мышь — поворот</div>
+<script src="${THREE_CDN}"><\/script>
+<script>
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x05080b);
+scene.fog = new THREE.Fog(0x05080b, 1, 16);
+const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 100);
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth, innerHeight);
+document.body.appendChild(renderer.domElement);
+scene.add(new THREE.AmbientLight(0x606070, 0.7));
+const torch = new THREE.PointLight(0x39d98a, 3, 12);
+scene.add(torch);
+const MAP = [
+  [1,1,1,1,1,1,1,1,1,1],[1,0,0,1,0,0,0,0,0,1],[1,0,1,1,0,1,1,0,0,1],
+  [1,0,0,0,0,0,0,0,1,1],[1,1,1,1,0,1,0,0,0,1],[1,0,0,0,0,1,1,1,0,1],
+  [1,0,1,1,0,0,0,0,0,1],[1,0,1,1,1,1,0,1,0,1],[1,0,0,0,0,0,0,0,0,1],
+  [1,1,1,1,1,1,1,1,1,1]
+];
+const SIZE = 4;
+const wallMat = new THREE.MeshStandardMaterial({color:0x2a3b50});
+for(let r=0;r<MAP.length;r++) for(let c=0;c<MAP[r].length;c++){
+  if(MAP[r][c] === 1){
+    const w = new THREE.Mesh(new THREE.BoxGeometry(SIZE, SIZE, SIZE), wallMat);
+    w.position.set(c*SIZE, SIZE/2, r*SIZE);
+    scene.add(w);
+  }
+}
+let px = 1.5 * SIZE, pz = 1.5 * SIZE, yaw = 0;
+const keys = {};
+addEventListener('keydown', e=>{
+  keys[e.key] = true;
+  if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key)) e.preventDefault();
+});
+addEventListener('keyup', e=>{ keys[e.key] = false; });
+let md = false;
+addEventListener('mousedown', ()=>{ md = true; });
+addEventListener('mouseup', ()=>{ md = false; });
+addEventListener('mousemove', e=>{ if(md) yaw -= e.movementX * 0.003; });
+function isWall(x, z){
+  const c = Math.floor(x / SIZE), r = Math.floor(z / SIZE);
+  if(r < 0 || r >= MAP.length || c < 0 || c >= MAP[0].length) return true;
+  return MAP[r][c] === 1;
+}
+function animate(){
+  requestAnimationFrame(animate);
+  if(keys['ArrowLeft']) yaw += 0.04;
+  if(keys['ArrowRight']) yaw -= 0.04;
+  let dx = 0, dz = 0;
+  const fwd = {x: -Math.sin(yaw), z: -Math.cos(yaw)};
+  const right = {x: Math.cos(yaw), z: -Math.sin(yaw)};
+  const speed = 0.12;
+  if(keys['w'] || keys['ArrowUp'] || keys['ц']){ dx += fwd.x*speed; dz += fwd.z*speed; }
+  if(keys['s'] || keys['ArrowDown'] || keys['ы']){ dx -= fwd.x*speed; dz -= fwd.z*speed; }
+  if(keys['a'] || keys['ф']){ dx -= right.x*speed; dz -= right.z*speed; }
+  if(keys['d'] || keys['в']){ dx += right.x*speed; dz += right.z*speed; }
+  const nx = px + dx, nz = pz + dz;
+  if(!isWall(nx + Math.sign(dx)*0.3, pz)) px = nx;
+  if(!isWall(px, nz + Math.sign(dz)*0.3)) pz = nz;
+  camera.position.set(px, 1.6, pz);
+  camera.rotation.y = yaw;
+  torch.position.set(px, 1.6, pz);
+  renderer.render(scene, camera);
+}
+animate();
+addEventListener('resize', ()=>{
+  camera.aspect = innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+<\/script></body></html>`
+};
+
+/* ================================================================
+   6. КАТАЛОГ
+   ================================================================ */
+function renderFilters(){
+  const cats = ['all', ...new Set(GAMES.map(g => g.cat))];
+  const box = document.getElementById('filters');
+  if(!box) return;
+  box.innerHTML = '';
+  cats.forEach(c=>{
+    const el = document.createElement('div');
+    el.className = 'chip' + (c === currentGameFilter ? ' active' : '');
+    el.textContent = c === 'all' ? 'Все игры' : c;
+    el.onclick = ()=>{ currentGameFilter = c; renderFilters(); renderCatalog(); beep(600,.05); };
+    box.appendChild(el);
+  });
+}
+function renderCatalog(){
+  const grid = document.getElementById('gameGrid');
+  if(!grid) return;
+  grid.innerHTML = '';
+  const list = currentGameFilter === 'all' ? GAMES : GAMES.filter(g => g.cat === currentGameFilter);
+  const catCountEl = document.getElementById('catCount');
+  if(catCountEl) catCountEl.textContent = list.length + ' игр' +
+    (currentGameFilter !== 'all' ? ' · ' + currentGameFilter : '');
+  list.forEach(g=>{
+    const card = document.createElement('div');
+    card.className = 'card';
+    const catClass = g.cat === '3D' ? 'tag cat3d' : 'tag';
+    card.innerHTML = '<div class="thumb">' + g.icon + '</div>' +
+      '<h3>' + g.name + '</h3><p>' + g.desc + '</p>' +
+      '<div class="meta"><span class="' + catClass + '">' + g.cat + '</span></div>';
+    card.onclick = ()=>{
+      beep(880,.08);
+      document.getElementById('code').value = GAME_CODE[g.id]();
+      updateModeBadge();
+      switchView('editor');
+      if(settings.autostart) setTimeout(runGame, 60);
+    };
+    grid.appendChild(card);
+  });
+}
+const btnRandomEl = document.getElementById('btnRandom');
+if(btnRandomEl) btnRandomEl.addEventListener('click', ()=>{
+  const g = GAMES[Math.floor(Math.random()*GAMES.length)];
+  document.getElementById('code').value = GAME_CODE[g.id]();
+  updateModeBadge();
+  switchView('editor'); runGame();
+});
+
+function updateModeBadge(){
+  const badge = document.getElementById('modeBadge');
+  if(!badge) return;
+  const code = document.getElementById('code').value;
+  const is3D = /three(\.min)?\.js|THREE\.|WebGLRenderer|three@/i.test(code);
+  badge.textContent = is3D ? '3D' : '2D';
+  badge.classList.toggle('on', is3D);
+}
+
+/* ================================================================
+   7. ИНЖЕКТОР
+   ================================================================ */
+const ta = document.getElementById('code');
+const frame = document.getElementById('frame');
+const placeholder = document.getElementById('placeholder');
+const stage = document.getElementById('stage');
+const statusEl = document.getElementById('status');
+
+function setStatus(text, type){
+  if(!statusEl) return;
+  statusEl.textContent = text;
+  statusEl.className = 'statusbar' + (type ? ' ' + type : '');
+}
+
+const ERROR_HOOK = '<script>window.addEventListener("error",function(e){' +
+  'parent.postMessage({__game:1,type:"error",message:e.message||"Ошибка",line:e.lineno||0},"*")});<\/script>';
+
+function buildDoc(code){
+  const looksHtml = /<html[\s>]/i.test(code) || /<!doctype/i.test(code);
+  if(looksHtml){
+    if(/<head[^>]*>/i.test(code)) return code.replace(/<head[^>]*>/i, m => m + ERROR_HOOK);
+    return ERROR_HOOK + code;
+  }
+  return '<!DOCTYPE html><html><head><meta charset="utf-8">' + ERROR_HOOK +
+    '<style>html,body{margin:0;height:100%;background:#0b0f14;color:#e6edf3;' +
+    'font-family:system-ui,sans-serif;overflow:hidden}canvas{display:block}</style>' +
+    '</head><body>' + code + '</body></html>';
+}
+function runGame(){
+  if(!ta) return;
+  let code = ta.value;
+  if(!code.trim()){ setStatus('⚠ Сначала вставьте код игры.', 'error'); return; }
+  if(settings.autoThree && /THREE\./.test(code) && !/three[^"']*\.js/i.test(code)){
+    if(/<head[^>]*>/i.test(code)){
+      code = code.replace(/<head[^>]*>/i, m => m + '<script src="' + THREE_CDN + '"><\/script>');
+    }
+    ta.value = code;
+  }
+  if(placeholder) placeholder.hidden = true;
+  if(frame) frame.srcdoc = buildDoc(code);
+  if(settings.autosave){ try{ localStorage.setItem('gamelab_code', code); }catch(e){} }
+  const is3D = /three(\.min)?\.js|THREE\.|WebGLRenderer/i.test(code);
+  setStatus('▶ ' + (is3D ? '3D' : '2D') + ' игра запущена.', 'ok');
+  beep(880,.07);
+  updateModeBadge();
+}
+function stopGame(){
+  if(frame) frame.srcdoc = '<!DOCTYPE html><html><body style="margin:0;background:#0b0f14"></body></html>';
+  if(placeholder) placeholder.hidden = false;
+  setStatus('■ Игра остановлена.');
+  beep(420,.07);
+}
+const btnRunEl = document.getElementById('btnRun');
+if(btnRunEl) btnRunEl.addEventListener('click', runGame);
+const btnStopEl = document.getElementById('btnStop');
+if(btnStopEl) btnStopEl.addEventListener('click', stopGame);
+const btnFsEl = document.getElementById('btnFs');
+if(btnFsEl) btnFsEl.addEventListener('click', ()=>{
+  if(document.fullscreenElement) document.exitFullscreen();
+  else if(stage && stage.requestFullscreen) stage.requestFullscreen().catch(()=>{});
+});
+
+const exSel = document.getElementById('examples');
+if(exSel){
+  GAMES.forEach(g=>{
+    const o = document.createElement('option');
+    o.value = g.id; o.textContent = g.icon + ' ' + g.name;
+    exSel.appendChild(o);
+  });
+  exSel.addEventListener('change', e=>{
+    const g = GAMES.find(x=>x.id === e.target.value);
+    if(!g) return;
+    ta.value = GAME_CODE[g.id](); updateModeBadge();
+    e.target.value = ''; runGame();
+  });
+}
+if(ta){
+  ta.addEventListener('keydown', e=>{
+    if(e.key === 'Enter' && (e.ctrlKey || e.metaKey)){ e.preventDefault(); runGame(); return; }
+    if(e.key === 'Tab'){
+      e.preventDefault();
+      const s = ta.selectionStart, en = ta.selectionEnd;
+      const pad = ' '.repeat(settings.tabSize);
+      ta.value = ta.value.slice(0,s) + pad + ta.value.slice(en);
+      ta.selectionStart = ta.selectionEnd = s + pad.length;
+    }
+  });
+  ta.addEventListener('input', updateModeBadge);
+}
+window.addEventListener('message', e=>{
+  const d = e.data;
+  if(d && d.__game && d.type === 'error'){
+    setStatus('✖ Ошибка: ' + d.message + (d.line ? ' (строка ' + d.line + ')' : ''), 'error');
+  }
+});
+
+/* ================================================================
+   8. ИИ-ЧАТ
+   ================================================================ */
+const chatScroll = document.getElementById('chatScroll');
+const chatText = document.getElementById('chatText');
+const quickRow = document.getElementById('quickRow');
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+function esc(s){ return String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+function fmt(text){
+  const parts = String(text).split(/```/);
+  let html = '';
+  parts.forEach((p,i)=>{
+    if(i % 2 === 1){
+      let lines = p.split('\n');
+      let lang = lines[0].trim();
+      if(/^[a-z]{1,12}$/i.test(lang)) lines.shift();
+      const code = lines.join('\n').replace(/\s+$/,'');
+      html += '<pre class="code"><div class="code-tools">' +
+        '<button class="code-btn run" data-act="run">▶ В редактор</button>' +
+        '<button class="code-btn" data-act="copy">Копировать</button>' +
+        '</div><code>' + esc(code) + '</code></pre>';
+    } else {
+      html += esc(p)
+        .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
+        .replace(/`([^`]+)`/g, '<code class="inline">$1</code>')
+        .replace(/\n/g, '<br>');
+    }
+  });
+  return html;
+}
+document.addEventListener('click', e=>{
+  const btn = e.target.closest('.code-btn');
+  if(!btn) return;
+  const code = btn.closest('pre').querySelector('code').textContent;
+  if(btn.dataset.act === 'copy'){
+    navigator.clipboard.writeText(code).then(()=>{
+      btn.textContent = '✓';
+      setTimeout(()=>btn.textContent = 'Копировать', 1400);
+    });
+  } else if(btn.dataset.act === 'run'){
+    ta.value = code; updateModeBadge(); switchView('editor');
+    setTimeout(runGame, 80); beep(880,.08);
+  }
+});
+
+let typerAbort = false;
+async function typewriterAsync(bubble, text){
+  typerAbort = false;
+  const parts = text.split(/(```[\s\S]*?```)/);
+  bubble.innerHTML = '<span class="tw-content"></span><span class="tw-cursor"></span>';
+  const content = bubble.querySelector('.tw-content');
+  const cursor = bubble.querySelector('.tw-cursor');
+  bubble.style.cursor = 'pointer';
+  bubble.onclick = ()=>{ typerAbort = true; };
+  let plain = '';
+  for(const part of parts){
+    if(typerAbort) break;
+    if(part.startsWith('```')){
+      plain += part; content.textContent = plain;
+      if(chatScroll) chatScroll.scrollTop = chatScroll.scrollHeight;
+      await sleep(140);
+    } else {
+      for(let i=0;i<part.length;i++){
+        if(typerAbort){ plain += part.slice(i); content.textContent = plain; break; }
+        plain += part[i]; content.textContent = plain;
+        if(i % 4 === 0 && chatScroll) chatScroll.scrollTop = chatScroll.scrollHeight;
+        const ch = part[i];
+        await sleep(ch === '\n' ? 26 : ch === ' ' ? 13 : 11);
+      }
+    }
+  }
+  if(cursor) cursor.remove();
+  bubble.innerHTML = fmt(text);
+  bubble.style.cursor = ''; bubble.onclick = null;
+  if(chatScroll) chatScroll.scrollTop = chatScroll.scrollHeight;
+}
+
+function addMessage(role, text){
+  const wrap = document.createElement('div');
+  wrap.className = 'msg ' + role;
+  const av = document.createElement('div');
+  av.className = 'avatar';
+  av.textContent = role === 'ai' ? MODELS[currentModel].icon : '🧑';
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+  wrap.appendChild(av); wrap.appendChild(bubble);
+  if(chatScroll){
+    chatScroll.appendChild(wrap);
+    chatScroll.scrollTop = chatScroll.scrollHeight;
+  }
+  return { wrap, bubble };
+}
+function showTyping(msg){
+  const wrap = document.createElement('div');
+  wrap.className = 'msg ai'; wrap.id = 'typingMsg';
+  wrap.innerHTML = '<div class="avatar">' + MODELS[currentModel].icon + '</div>' +
+    '<div class="bubble"><div class="typing"><i></i><i></i><i></i></div>' +
+    (msg ? '<div style="font-size:11px;color:var(--muted);margin-top:6px">' + msg + '</div>' : '') +
+    '</div>';
+  if(chatScroll){
+    chatScroll.appendChild(wrap);
+    chatScroll.scrollTop = chatScroll.scrollHeight;
+  }
+}
+function updateTyping(msg){
+  const el = document.getElementById('typingMsg');
+  if(!el) return;
+  el.querySelector('.bubble').innerHTML =
+    '<div class="typing"><i></i><i></i><i></i></div>' +
+    (msg ? '<div style="font-size:11px;color:var(--muted);margin-top:6px">' + msg + '</div>' : '');
+  if(chatScroll) chatScroll.scrollTop = chatScroll.scrollHeight;
+}
+function hideTyping(){ const el = document.getElementById('typingMsg'); if(el) el.remove(); }
+
+let gigaToken = null, gigaTokenExp = 0;
+async function getGigaChatToken(id, secret){
+  if(gigaToken && Date.now() < gigaTokenExp) return gigaToken;
+  const auth = btoa(id + ':' + secret);
+  const rid = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() :
+    'rid_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+  const res = await fetch('https://ngw.devices.sberbank.ru:9443/api/v2/oauth', {
+    method:'POST',
+    headers:{
+      'Content-Type':'application/x-www-form-urlencoded',
+      'Accept':'application/json',
+      'RqUID': rid,
+      'Authorization':'Basic ' + auth
+    },
+    body:'scope=GIGACHAT_API_PERS'
+  });
+  if(!res.ok) throw new Error('GigaChat OAuth HTTP ' + res.status);
+  const data = await res.json();
+  gigaToken = data.access_token;
+  gigaTokenExp = Date.now() + 1500000;
+  return gigaToken;
+}
+
+async function callSource(p, messages){
+  if(p.kind === 'plain'){
+    const prompt = messages.map(m => {
+      if(m.role === 'system') return '[ИНСТРУКЦИЯ]\n' + m.content;
+      if(m.role === 'user') return '[ЗАПРОС]\n' + m.content;
+      return '[ОТВЕТ]\n' + m.content;
+    }).join('\n\n') + '\n\n[ОТВЕТ]';
+    const url = p.url + encodeURIComponent(prompt) + '?model=openai';
+    const ctrl = new AbortController();
+    const t = setTimeout(()=>ctrl.abort(), 25000);
+    const res = await fetch(url, { signal: ctrl.signal });
+    clearTimeout(t);
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    return (await res.text()).trim();
+  }
+  if(p.kind === 'ddg'){
+    const ctrl = new AbortController();
+    const t = setTimeout(()=>ctrl.abort(), 8000);
+    const init = await fetch('https://duckduckgo.com/duckchat/v1/status',
+      { headers:{ 'x-vqd-accept':'1' }, signal: ctrl.signal });
+    clearTimeout(t);
+    if(!init.ok) throw new Error('DDG init HTTP ' + init.status);
+    const vqd = init.headers.get('x-vqd-4');
+    if(!vqd) throw new Error('DDG нет токена');
+    const ctrl2 = new AbortController();
+    const t2 = setTimeout(()=>ctrl2.abort(), 25000);
+    const res = await fetch(p.url, {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', 'x-vqd-4': vqd },
+      body: JSON.stringify({
+        model: p.model,
+        messages: messages.map(m => ({ role: m.role === 'system' ? 'user' : m.role, content: m.content }))
+      }),
+      signal: ctrl2.signal
+    });
+    clearTimeout(t2);
+    if(!res.ok) throw new Error('DDG HTTP ' + res.status);
+    const text = await res.text();
+    let full = '';
+    for(const ln of text.split('\n')){
+      if(!ln.trim()) continue;
+      try{
+        const j = JSON.parse(ln.replace(/^data:\s*/, ''));
+        if(j.message) full += j.message;
+      }catch(e){}
+    }
+    if(!full.trim()) throw new Error('пустой ответ DDG');
+    return full.trim();
+  }
+  const headers = { 'Content-Type':'application/json' };
+  if(p.needsKey){
+    const k = settings.keys[p.needsKey];
+    if(!k) throw new Error('нет ключа');
+    headers['Authorization'] = 'Bearer ' + k;
+  }
+  const ctrl = new AbortController();
+  const t = setTimeout(()=>ctrl.abort(), 25000);
+  const res = await fetch(p.url, {
+    method:'POST', headers,
+    body: JSON.stringify({
+      model: p.model,
+      messages: messages.map(m => ({ role: m.role, content: m.content })),
+      temperature: 0.7
+    }),
+    signal: ctrl.signal
+  });
+  clearTimeout(t);
+  if(!res.ok){
+    const txt = await res.text().catch(()=>'');
+    throw new Error('HTTP ' + res.status + (txt ? ' ' + txt.slice(0,50) : ''));
+  }
+  const data = await res.json();
+  const reply = data.choices?.[0]?.message?.content;
+  if(!reply) throw new Error('пустой ответ');
+  return reply;
+}
+
+async function callAutoChain(messages){
+  fbState = {};
+  let lastErr = '';
+  for(let i=0;i<FALLBACK_CHAIN.length;i++){
+    const p = FALLBACK_CHAIN[i];
+    if(p.needsKey && !settings.keys[p.needsKey]){ fbState[p.id] = 'skip'; renderFbChain(); continue; }
+    fbState[p.id] = 'trying'; renderFbChain();
+    updateTyping('пробую <b>' + p.name + '</b>… (' + (i+1) + '/' + FALLBACK_CHAIN.length + ')');
+    try{
+      const reply = await callSource(p, messages);
+      fbState[p.id] = 'ok'; renderFbChain();
+      return reply;
+    }catch(err){
+      fbState[p.id] = 'fail';
+      lastErr = err.name === 'AbortError' ? 'таймаут' : (err.message || 'ошибка').slice(0,60);
+      renderFbChain();
+      continue;
+    }
+  }
+  fbState['local'] = 'ok'; renderFbChain();
+  return '__ALL_FAILED__' + lastErr;
+}
+
+async function callLLM(messages){
+  const model = MODELS[currentModel];
+  if(model.provider === 'chain'){
+    const r = await callAutoChain(messages);
+    if(r.startsWith('__ALL_FAILED__')){
+      return '__ERROR__Все источники не ответили (' + r.replace('__ALL_FAILED__','') + ')';
+    }
+    return r;
+  }
+  const prov = PROVIDERS[model.provider];
+  const key = settings.keys[model.provider];
+  if(!key) return '__ERROR__Нет ключа. Вставь в Настройках.';
+  try{
+    if(prov.special === 'gigachat'){
+      const [id, secret] = key.split(':');
+      if(!id || !secret) throw new Error('Формат: client_id:client_secret');
+      const token = await getGigaChatToken(id.trim(), secret.trim());
+      const res = await fetch(prov.url, {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer ' + token },
+        body: JSON.stringify({
+          model: prov.model,
+          messages: messages.map(m => ({ role: m.role, content: m.content })),
+          temperature: 0.7
+        })
+      });
+      if(!res.ok) throw new Error('GigaChat HTTP ' + res.status);
+      const data = await res.json();
+      return data.choices?.[0]?.message?.content || null;
+    }
+    if(prov.special === 'yandex'){
+      const [apiKey, folder] = key.split(':');
+      if(!apiKey || !folder) throw new Error('Формат: Api-Key:folder_id');
+      const res = await fetch(prov.url, {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json', 'Authorization':'Api-Key ' + apiKey.trim() },
+        body: JSON.stringify({
+          modelUri: 'gpt://' + folder.trim() + '/' + prov.model,
+          completionOptions: { stream:false, temperature:0.7, maxTokens:2000 },
+          messages: messages.map(m => ({
+            role: m.role === 'assistant' ? 'assistant' : 'user',
+            text: m.content
+          }))
+        })
+      });
+      if(!res.ok) throw new Error('Yandex HTTP ' + res.status);
+      const data = await res.json();
+      return data.result?.alternatives?.[0]?.message?.text || null;
+    }
+    const res = await fetch(prov.url, {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer ' + key },
+      body: JSON.stringify({
+        model: prov.model,
+        messages: messages.map(m => ({ role: m.role, content: m.content })),
+        temperature: 0.7
+      })
+    });
+    if(!res.ok){
+      const txt = await res.text().catch(()=>'');
+      throw new Error('HTTP ' + res.status + (txt ? ' ' + txt.slice(0,60) : ''));
+    }
+    const data = await res.json();
+    return data.choices?.[0]?.message?.content || null;
+  }catch(err){
+    return '__ERROR__' + err.message;
+  }
+}
+
+const SYSTEM_PROMPTS = {
+  create:'Ты — ИИ-разработчик игр и приложений на 2D и 3D. Создай ОДИН рабочий HTML-файл ' +
+    '(HTML+CSS+JS в одном документе) по описанию пользователя. ' +
+    'Для 3D используй Three.js через CDN: ' +
+    '<script src="https://cdn.jsdelivr.net/npm/three@0.150.1/build/three.min.js"><\/script>. ' +
+    'Для 2D используй Canvas. Отвечай по-русски кратко: что сделал + код в блоке ```html```. ' +
+    'Код должен запускаться сразу в браузере без сборки. Без React/Vue/тяжелых фреймворков.',
+  learn:'Ты — учитель программирования. Объясняй по-русски просто, с примерами в ```js``` или ```html```. ' +
+    'Учи и 2D (Canvas) и 3D (Three.js). Давай задание в конце. Кратко.'
+};
+
+function localReply(text, mode){
+  const t = text.toLowerCase().trim();
+  if(mode === 'create'){
+    const map = [
+      [/змейк.*3d|3d.*змейк/i, 'snake3d'],
+      [/куб|3d/i, 'cube3d'],
+      [/звезд|звёзд|космос|полёт|полет/i, 'stars3d'],
+      [/планет/i, 'planet3d'],
+      [/корабл|кольц/i, 'ship3d'],
+      [/лабиринт|maze/i, 'maze3d'],
+      [/змейк|snake/i, 'snake'],
+      [/понг|pong|теннис/i, 'pong'],
+      [/арканоид|breakout|кирпич/i, 'breakout'],
+      [/тетрис|tetris/i, 'tetris'],
+      [/flappy|флаппи|птиц/i, 'flappy'],
+      [/2048/, '2048'],
+      [/крестик|нолик|tic|xo/i, 'tictactoe'],
+      [/кликер|clicker|тык/i, 'clicker']
+    ];
+    for(const [re,id] of map){
+      if(re.test(t)){
+        return '⚠️ **Все онлайн-ИИ не ответили** — даю готовый шаблон из встроенной библиотеки.\n\n' +
+          '```html\n' + GAME_CODE[id]() + '\n```';
+      }
+    }
+    return '⚠️ **Все бесплатные ИИ не ответили.**\n\n' +
+      '**Что делать:**\n• Подожди 10–30 секунд, попробуй ещё раз\n' +
+      '• Возьми ключ Groq (console.groq.com — 1 минута)\n' +
+      '• Переключись на Лайт / Обход с ключом\n\n' +
+      'А пока — **Каталог** с 14 играми (2D + 3D). 🎮';
+  }
+  return '⚠ Для режима **Учёба** не удалось получить ответ. Попробуй через минуту.';
+}
+
+async function sendToCoddy(){
+  const text = chatText.value.trim();
+  if(!text) return;
+  chatText.value = ''; chatText.style.height = 'auto';
+  beep(760,.06);
+
+  const u = addMessage('user', text);
+  u.bubble.innerHTML = fmt(text);
+  chatHistory.push({ role:'user', content:text });
+
+  showTyping();
+  const msgs = [
+    { role:'system', content: SYSTEM_PROMPTS[aiMode] },
+    ...chatHistory.slice(-8)
+  ];
+  const llm = await callLLM(msgs);
+  hideTyping();
+
+  let reply;
+  if(llm && !llm.startsWith('__ERROR__')) reply = llm;
+  else if(llm && llm.startsWith('__ERROR__')){
+    reply = '❌ **Ошибка:** ' + llm.replace('__ERROR__','') + '\n\n' + localReply(text, aiMode);
+  } else reply = localReply(text, aiMode);
+
+  const m = addMessage('ai', reply);
+  if(settings.typewriter) await typewriterAsync(m.bubble, reply);
+  else m.bubble.innerHTML = fmt(reply);
+
+  chatHistory.push({ role:'assistant', content:reply });
+  if(chatScroll) chatScroll.scrollTop = chatScroll.scrollHeight;
+}
+const btnSendEl = document.getElementById('btnSend');
+if(btnSendEl) btnSendEl.addEventListener('click', sendToCoddy);
+if(chatText){
+  chatText.addEventListener('keydown', e=>{
+    if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); sendToCoddy(); }
+  });
+  chatText.addEventListener('input', function(){
+    this.style.height = 'auto';
+    this.style.height = Math.min(this.scrollHeight, 150) + 'px';
+  });
+}
+
+function renderFbChain(){
+  const box = document.getElementById('fbChain');
+  if(!box) return;
+  if(currentModel !== 'auto'){ box.innerHTML = ''; return; }
+  let html = '<div class="fb-chain"><div class="fb-chain-title">Цепочка источников</div>';
+  FALLBACK_CHAIN.forEach(p=>{
+    const s = fbState[p.id] || 'idle';
+    let cls = '', ico = '○';
+    if(s === 'ok'){ cls = 'active'; ico = '✓'; }
+    else if(s === 'fail'){ cls = 'fail'; ico = '✕'; }
+    else if(s === 'trying'){ cls = 'trying'; ico = '…'; }
+    else if(s === 'skip'){ cls = 'skip'; ico = '−'; }
+    html += '<div class="fb-item ' + cls + '">' +
+      '<span class="fb-dot"></span>' +
+      '<span class="fb-name">' + p.name + '</span>' +
+      '<span class="fb-status">' + ico + '</span></div>';
+  });
+  html += '<div class="fb-item ' + (fbState['local'] === 'ok' ? 'active' : '') + '">' +
+    '<span class="fb-dot"></span><span class="fb-name">Локальные шаблоны</span>' +
+    '<span class="fb-status">' + (fbState['local'] === 'ok' ? '✓' : '○') + '</span></div></div>';
+  box.innerHTML = html;
+}
+
+function renderModels(){
+  const list = document.getElementById('modelList');
+  if(!list) return;
+  list.innerHTML = '';
+  Object.entries(MODELS).forEach(([key, m])=>{
+    const avail = isModelAvailable(key);
+    const it = document.createElement('div');
+    it.className = 'model-item' + (key === currentModel ? ' active' : '') + (avail ? '' : ' unavailable');
+    it.innerHTML =
+      '<span class="mi-ico">' + m.icon + '</span>' +
+      '<div class="mi-info">' +
+        '<span class="mi-name">' + m.name + '</span>' +
+        '<span class="mi-short">' + m.short + '</span>' +
+      '</div>' +
+      '<span class="badge ' + m.badge.toLowerCase() + '">' + m.badge + '</span>';
+    it.onclick = ()=>{
+      currentModel = key; settings.model = key;
+      saveSettings(); updateModelUI(); updateChatHeader();
+      beep(880,.07);
+    };
+    list.appendChild(it);
+  });
+}
+function updateModelUI(){
+  const note = getModelNote(currentModel);
+  const noteEl = document.getElementById('modelNote');
+  if(!noteEl) return;
+  noteEl.className = 'model-note ' + note.cls;
+  noteEl.innerHTML = note.html;
+  renderModels(); renderFbChain();
+}
+function updateChatHeader(){
+  const m = MODELS[currentModel];
+  const avail = isModelAvailable(currentModel);
+  const aiTitleEl = document.getElementById('aiTitle');
+  if(aiTitleEl) aiTitleEl.textContent = m.icon + ' ' + m.name + (avail ? '' : ' ⛔');
+  let state = 'готов';
+  if(!avail) state = 'недоступен в РФ';
+  else if(currentModel === 'auto') state = 'без ключа · 2D/3D';
+  else state = settings.keys[m.provider] ? 'готов' : 'нужен ключ';
+  const aiSubEl = document.getElementById('aiSub');
+  if(aiSubEl) aiSubEl.textContent = m.short + ' · ' + state;
+}
+
+document.querySelectorAll('.mode-btn').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    aiMode = b.dataset.mode;
+    document.querySelectorAll('.mode-btn').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    beep(640,.06);
+    if(chatText) chatText.placeholder = aiMode === 'create' ? 'Опиши, что создать...' : 'Спроси про тему...';
+    renderQuick();
+  });
+});
+
+function renderQuick(){
+  if(!quickRow) return;
+  quickRow.innerHTML = '';
+  const items = aiMode === 'create'
+    ? [
+        {t:'Сделай 3D куб', d3:true},
+        {t:'3D звёзды', d3:true},
+        {t:'3D змейку', d3:true},
+        {t:'Сделай змейку'},
+        {t:'Калькулятор'},
+        {t:'Шутер'}
+      ]
+    : [
+        {t:'Что такое Three.js?', d3:true},
+        {t:'Как работает Canvas?'},
+        {t:'Что такое переменные?'},
+        {t:'Объясни циклы'},
+        {t:'Дальше'}
+      ];
+  items.forEach(item=>{
+    const b = document.createElement('div');
+    b.className = 'quick' + (item.d3 ? ' d3' : '');
+    b.textContent = item.t;
+    b.onclick = ()=>{ chatText.value = item.t; sendToCoddy(); };
+    quickRow.appendChild(b);
+  });
+}
+
+const btnClearChatEl = document.getElementById('btnClearChat');
+if(btnClearChatEl) btnClearChatEl.addEventListener('click', ()=>{
+  if(chatScroll) chatScroll.innerHTML = '';
+  chatHistory = [];
+  beep(400,.06);
+  greet();
+});
+
+async function greet(){
+  const m = MODELS[currentModel];
+  const note = getModelNote(currentModel);
+  const fullGreet = m.greeting + '\n\n' + note.html.replace(/<[^>]+>/g, '') + '\n\n' +
+    (aiMode === 'create'
+      ? '**Попробуй:** «сделай 3D куб», «3D звёзды», «сделай змейку»'
+      : '**Спроси:** «что такое Three.js», «объясни циклы»');
+  const msg = addMessage('ai', fullGreet);
+  if(settings.typewriter) await typewriterAsync(msg.bubble, fullGreet);
+  else msg.bubble.innerHTML = fmt(fullGreet);
+}
+
+/* ================================================================
+   9. AI-ВКЛАДКИ
+   ================================================================ */
+document.querySelectorAll('.ai-tab').forEach(tab=>{
+  tab.addEventListener('click', ()=>{
+    document.querySelectorAll('.ai-tab').forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active');
+    currentTab = tab.dataset.aitab;
+    document.querySelectorAll('.ai-panel').forEach(p=>p.classList.remove('active'));
+    const panel = document.getElementById('panel-' + currentTab);
+    if(panel) panel.classList.add('active');
+    beep(700,.05);
+  });
+});
+
+/* ================================================================
+   10. КАРТИНКИ
+   ================================================================ */
+const btnImageEl = document.getElementById('btnImage');
+if(btnImageEl) btnImageEl.addEventListener('click', generateImage);
+const imagePromptEl = document.getElementById('imagePrompt');
+if(imagePromptEl) imagePromptEl.addEventListener('keydown', e=>{
+  if(e.key === 'Enter') generateImage();
+});
+
+async function generateImage(){
+  const prompt = document.getElementById('imagePrompt').value.trim();
+  if(!prompt){ alert('Введи описание картинки'); return; }
+  const provider = document.getElementById('imageProvider').value;
+  const view = document.getElementById('imageView');
+  view.innerHTML = '<div class="media-loading">' +
+    '<div class="media-spinner"></div>' +
+    '<div>Генерирую через ' + provider + '...</div>' +
+    '<div class="media-progress">обычно 5–20 сек</div>' +
+    '</div>';
+
+  try{
+    const result = await callImageAPI(provider, prompt);
+    showImageResult(result, prompt);
+  }catch(err){
+    console.error(err);
+    view.innerHTML = '<div class="media-error">❌ ' + esc(err.message || err) +
+      '<br><br><span style="color:var(--muted)">Проверь ключ в Настройках. Если используешь бесплатного провайдера — он мог быть перегружен.</span></div>';
+  }
+}
+
+async function callImageAPI(provider, prompt){
+  const k = settings.keys;
+
+  if(provider === 'pollinations'){
+    const seed = Math.floor(Math.random() * 1e6);
+    const url = 'https://image.pollinations.ai/prompt/' +
+      encodeURIComponent(prompt) +
+      '?width=1024&height=1024&nologo=true&model=flux&seed=' + seed;
+    return { type:'url', url };
+  }
+
+  if(provider === 'stability'){
+    if(!k.stability) throw new Error('Нужен ключ Stability AI');
+    const res = await fetch(
+      'https://api.stability.ai/v1/generation/stable-diffusion-xl-1024-v1-0/text-to-image',
+      {
+        method:'POST',
+        headers:{
+          'Content-Type':'application/json',
+          'Accept':'application/json',
+          'Authorization':'Bearer ' + k.stability
+        },
+        body: JSON.stringify({
+          text_prompts:[{ text: prompt, weight: 1 }],
+          cfg_scale: 7, height: 1024, width: 1024,
+          samples: 1, steps: 30
+        })
+      });
+    if(!res.ok){
+      const t = await res.text().catch(()=>'');
+      throw new Error('Stability ' + res.status + ' ' + t.slice(0,100));
+    }
+    const data = await res.json();
+    const b64 = data.artifacts?.[0]?.base64;
+    if(!b64) throw new Error('Пустой ответ Stability');
+    return { type:'b64', data: b64, mime:'image/png' };
+  }
+
+  if(provider === 'together'){
+    if(!k.together) throw new Error('Нужен ключ Together AI');
+    const res = await fetch('https://api.together.xyz/v1/images/generations', {
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'Authorization':'Bearer ' + k.together
+      },
+      body: JSON.stringify({
+        model:'black-forest-labs/FLUX.1-schnell-Free',
+        prompt, width:1024, height:1024, steps:4, n:1, response_format:'b64_json'
+      })
+    });
+    if(!res.ok){
+      const t = await res.text().catch(()=>'');
+      throw new Error('Together ' + res.status + ' ' + t.slice(0,100));
+    }
+    const data = await res.json();
+    const b64 = data.data?.[0]?.b64_json;
+    if(b64) return { type:'b64', data: b64, mime:'image/png' };
+    const url = data.data?.[0]?.url;
+    if(url) return { type:'url', url };
+    throw new Error('Пустой ответ Together');
+  }
+
+  if(provider === 'deepinfra'){
+    if(!k.deepinfra) throw new Error('Нужен ключ DeepInfra');
+    const res = await fetch('https://api.deepinfra.com/v1/openai/images/generations', {
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'Authorization':'Bearer ' + k.deepinfra
+      },
+      body: JSON.stringify({
+        model:'black-forest-labs/FLUX-1-schnell',
+        prompt, n:1, size:'1024x1024', response_format:'b64_json'
+      })
+    });
+    if(!res.ok){
+      const t = await res.text().catch(()=>'');
+      throw new Error('DeepInfra ' + res.status + ' ' + t.slice(0,100));
+    }
+    const data = await res.json();
+    const b64 = data.data?.[0]?.b64_json;
+    if(b64) return { type:'b64', data: b64, mime:'image/png' };
+    throw new Error('Пустой ответ DeepInfra');
+  }
+
+  if(provider === 'openai'){
+    if(!k.openai) throw new Error('Нужен ключ OpenAI');
+    const res = await fetch('https://api.openai.com/v1/images/generations', {
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'Authorization':'Bearer ' + k.openai
+      },
+      body: JSON.stringify({
+        model:'dall-e-3', prompt, n:1, size:'1024x1024',
+        response_format:'b64_json'
+      })
+    });
+    if(!res.ok){
+      const t = await res.text().catch(()=>'');
+      throw new Error('OpenAI ' + res.status + ' ' + t.slice(0,100));
+    }
+    const data = await res.json();
+    const b64 = data.data?.[0]?.b64_json;
+    if(b64) return { type:'b64', data: b64, mime:'image/png' };
+    const url = data.data?.[0]?.url;
+    if(url) return { type:'url', url };
+    throw new Error('Пустой ответ OpenAI');
+  }
+
+  throw new Error('Неизвестный провайдер: ' + provider);
+}
+
+function showImageResult(result, prompt){
+  const view = document.getElementById('imageView');
+  const src = result.type === 'url' ? result.url :
+    'data:' + result.mime + ';base64,' + result.data;
+
+  view.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;gap:12px;max-width:100%">' +
+    '<img src="' + src + '" alt="' + esc(prompt) + '" loading="lazy" ' +
+    'style="max-width:100%;max-height:70vh;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.5)">' +
+    '<div class="media-actions">' +
+    '<a href="' + src + '" download="ai-image.png" target="_blank">💾 Скачать</a>' +
+    '<a href="' + src + '" target="_blank" class="ghost">🔗 Открыть оригинал</a>' +
+    '</div></div>';
+}
+
+/* ================================================================
+   11. ЗВУК
+   ================================================================ */
+const btnAudioEl = document.getElementById('btnAudio');
+if(btnAudioEl) btnAudioEl.addEventListener('click', generateAudio);
+const audioTextEl = document.getElementById('audioText');
+if(audioTextEl) audioTextEl.addEventListener('keydown', e=>{
+  if(e.key === 'Enter') generateAudio();
+});
+
+async function generateAudio(){
+  const text = document.getElementById('audioText').value.trim();
+  if(!text){ alert('Введи текст для озвучки'); return; }
+  const provider = document.getElementById('audioProvider').value;
+  const voice = document.getElementById('audioVoice').value;
+  const view = document.getElementById('audioView');
+  view.innerHTML = '<div class="media-loading">' +
+    '<div class="media-spinner"></div>' +
+    '<div>Озвучиваю через ' + provider + '...</div>' +
+    '</div>';
+
+  try{
+    const blob = await callAudioAPI(provider, text, voice);
+    const url = URL.createObjectURL(blob);
+    view.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;gap:14px;max-width:600px;width:100%">' +
+      '<div style="font-size:44px">🔊</div>' +
+      '<div style="color:var(--muted);font-size:12.5px;text-align:center;line-height:1.5">' +
+      esc(text.slice(0,180)) + (text.length > 180 ? '…' : '') + '</div>' +
+      '<audio controls autoplay src="' + url + '" style="width:100%"></audio>' +
+      '<div class="media-actions">' +
+      '<a href="' + url + '" download="ai-audio.mp3">💾 Скачать MP3</a>' +
+      '</div></div>';
+  }catch(err){
+    console.error(err);
+    view.innerHTML = '<div class="media-error">❌ ' + esc(err.message || err) +
+      '<br><br><span style="color:var(--muted)">Проверь ключ ElevenLabs в Настройках.</span></div>';
+  }
+}
+
+async function callAudioAPI(provider, text, voiceId){
+  const k = settings.keys;
+
+  if(provider === 'elevenlabs'){
+    if(!k.elevenlabs) throw new Error('Нужен ключ ElevenLabs');
+    const res = await fetch('https://api.elevenlabs.io/v1/text-to-speech/' + voiceId, {
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'xi-api-key': k.elevenlabs,
+        'Accept':'audio/mpeg'
+      },
+      body: JSON.stringify({
+        text,
+        model_id:'eleven_multilingual_v2',
+        voice_settings:{ stability:0.5, similarity_boost:0.75 }
+      })
+    });
+    if(!res.ok){
+      const t = await res.text().catch(()=>'');
+      throw new Error('ElevenLabs ' + res.status + ' ' + t.slice(0,100));
+    }
+    return await res.blob();
+  }
+
+  throw new Error('Неизвестный провайдер: ' + provider);
+}
+
+/* ================================================================
+   12. ВИДЕО
+   ================================================================ */
+const btnVideoEl = document.getElementById('btnVideo');
+if(btnVideoEl) btnVideoEl.addEventListener('click', generateVideo);
+const videoPromptEl = document.getElementById('videoPrompt');
+if(videoPromptEl) videoPromptEl.addEventListener('keydown', e=>{
+  if(e.key === 'Enter') generateVideo();
+});
+
+async function generateVideo(){
+  const prompt = document.getElementById('videoPrompt').value.trim();
+  if(!prompt){ alert('Введи описание видео'); return; }
+  const view = document.getElementById('videoView');
+  view.innerHTML = '<div class="media-loading">' +
+    '<div class="media-spinner"></div>' +
+    '<div>Отправляю в Replicate...</div>' +
+    '<div class="media-progress" id="vidProgress">это займёт 1–3 минуты</div>' +
+    '</div>';
+
+  try{
+    const url = await callVideoAPI('replicate', prompt);
+    view.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;gap:12px;max-width:100%">' +
+      '<video controls autoplay loop src="' + url + '" ' +
+      'style="max-width:100%;max-height:70vh;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.5)"></video>' +
+      '<div class="media-actions">' +
+      '<a href="' + url + '" download="ai-video.mp4" target="_blank">💾 Скачать видео</a>' +
+      '</div></div>';
+  }catch(err){
+    console.error(err);
+    view.innerHTML = '<div class="media-error">❌ ' + esc(err.message || err) + '</div>';
+  }
+}
+
+async function callVideoAPI(provider, prompt){
+  const k = settings.keys;
+  if(!k.replicate) throw new Error('Нужен ключ Replicate');
+  if(provider !== 'replicate') throw new Error('Неизвестный провайдер: ' + provider);
+
+  const createRes = await fetch('https://api.replicate.com/v1/models/minimax/video-01/predictions', {
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'Authorization':'Bearer ' + k.replicate,
+      'Prefer':'wait'
+    },
+    body: JSON.stringify({
+      input: { prompt, prompt_optimizer: true }
+    })
+  });
+  if(!createRes.ok){
+    const t = await createRes.text().catch(()=>'');
+    throw new Error('Replicate ' + createRes.status + ' ' + t.slice(0,150));
+  }
+  let pred = await createRes.json();
+
+  const progress = document.getElementById('vidProgress');
+  let tries = 0;
+  while((pred.status === 'starting' || pred.status === 'processing') && tries < 120){
+    tries++;
+    if(progress) progress.textContent = 'Статус: ' + pred.status + ' · ' + tries + 'с';
+    await sleep(2000);
+    const r = await fetch('https://api.replicate.com/v1/predictions/' + pred.id, {
+      headers:{ 'Authorization':'Bearer ' + k.replicate }
+    });
+    pred = await r.json();
+  }
+  if(pred.status !== 'succeeded') throw new Error('Replicate: ' + (pred.error || pred.status));
+  const out = pred.output;
+  if(Array.isArray(out)) return out[0];
+  if(typeof out === 'string') return out;
+  if(out && out.url) return out.url;
+  throw new Error('Не получил URL видео');
+}
+
+/* ================================================================
+   13. НАСТРОЙКИ UI
+   ================================================================ */
+['gigachat','gemini','yandex','deepseek','groq'].forEach(id=>{
+  const el = document.getElementById('key-' + id);
+  if(!el) return;
+  el.addEventListener('input', ()=>{
+    settings.keys[id] = el.value.trim();
+    saveSettings(); updateChatHeader();
+  });
+});
+['stability','together','deepinfra','openai','elevenlabs','replicate'].forEach(id=>{
+  const el = document.getElementById('key-' + id);
+  if(!el) return;
+  el.addEventListener('input', ()=>{
+    settings.keys[id] = el.value.trim();
+    saveSettings();
+  });
+});
+
+const btnTestApiEl = document.getElementById('btnTestApi');
+if(btnTestApiEl) btnTestApiEl.addEventListener('click', async ()=>{
+  const st = document.getElementById('apiStatus');
+  st.className = 'api-status'; st.textContent = '⏳ Проверяю...';
+  const reply = await callLLM([{ role:'user', content:'Ответь одним словом "ок".' }]);
+  if(!reply){ st.className = 'api-status err'; st.textContent = '✖ Пустой ответ'; }
+  else if(reply.startsWith('__ERROR__')){
+    st.className = 'api-status err'; st.textContent = '✖ ' + reply.replace('__ERROR__','');
+  } else {
+    st.className = 'api-status ok'; st.textContent = '✓ Работает · ' + reply.slice(0,50);
+    updateChatHeader();
+  }
+});
+
+document.querySelectorAll('.tg[data-key]').forEach(tg=>{
+  tg.addEventListener('click', ()=>{
+    const k = tg.dataset.key;
+    settings[k] = !settings[k];
+    saveSettings(); applySettings();
+    beep(settings[k] ? 820 : 560, .05);
+  });
+});
+
+const accentPickerEl = document.getElementById('accentPicker');
+if(accentPickerEl){
+  accentPickerEl.addEventListener('input', e=>{
+    settings.accent = e.target.value; applyAccent(settings.accent); saveSettings();
+  });
+  accentPickerEl.addEventListener('change', ()=>{ applySettings(); beep(700,.05); });
+}
+
+(function renderSwatches(){
+  const box = document.getElementById('swatches');
+  if(!box) return;
+  PRESET_COLORS.forEach(c=>{
+    const s = document.createElement('div');
+    s.className = 'sw'; s.dataset.c = c; s.style.background = c;
+    s.onclick = ()=>{ settings.accent = c; saveSettings(); applySettings(); beep(700,.05); };
+    box.appendChild(s);
+  });
+})();
+
+const fontSizeEl = document.getElementById('fontSize');
+if(fontSizeEl) fontSizeEl.addEventListener('input', e=>{
+  settings.fontSize = parseInt(e.target.value, 10);
+  document.documentElement.style.setProperty('--fs', settings.fontSize + 'px');
+  document.getElementById('fontSizeVal').textContent = settings.fontSize;
+  saveSettings();
+});
+const tabSizeEl = document.getElementById('tabSize');
+if(tabSizeEl) tabSizeEl.addEventListener('change', e=>{
+  settings.tabSize = parseInt(e.target.value, 10);
+  document.getElementById('code').style.tabSize = settings.tabSize; saveSettings();
+});
+
+const btnCheckIPEl = document.getElementById('btnCheckIP');
+if(btnCheckIPEl) btnCheckIPEl.addEventListener('click', ()=>{ beep(700,.05); detectCountry(); });
+
+const VPNS = [
+  { name:'⚡ Cloudflare WARP', tag:'free', tagText:'∞ бесплатно',
+    desc:'Официальный клиент Cloudflare. Работает в РФ.', url:'https://1.1.1.1/' },
+  { name:'🚀 ProtonVPN Free', tag:'free', tagText:'∞ бесплатно',
+    desc:'Без лимита трафика, 3 страны бесплатно.', url:'https://protonvpn.com/free-vpn/' },
+  { name:'🌬️ Windscribe', tag:'free', tagText:'10 ГБ/мес',
+    desc:'10 ГБ бесплатно в месяц, 10+ локаций.', url:'https://windscribe.com/' },
+  { name:'🌐 Psiphon', tag:'free', tagText:'∞ бесплатно',
+    desc:'Специально для обхода блокировок.', url:'https://psiphon.ca/' }
+];
+(function renderVpns(){
+  const box = document.getElementById('vpnList');
+  if(!box) return;
+  VPNS.forEach(v=>{
+    const el = document.createElement('div');
+    el.className = 'vpn-item';
+    el.innerHTML = '<h4>' + v.name + ' <span class="vpn-tag ' + v.tag + '">' + v.tagText + '</span></h4>' +
+      '<p>' + v.desc + '</p>' +
+      '<a href="' + v.url + '" target="_blank" rel="noopener">Открыть →</a>';
+    box.appendChild(el);
+  });
+})();
+
+const btnResetEl = document.getElementById('btnReset');
+if(btnResetEl) btnResetEl.addEventListener('click', ()=>{
+  if(!confirm('Сбросить все настройки и ключи?')) return;
+  settings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
+  saveSettings();
+  try{ localStorage.removeItem('gamelab_code'); localStorage.removeItem('gamelab_settings'); }catch(e){}
+  applySettings(); renderModels(); updateModelUI(); updateChatHeader(); renderQuick();
+  beep(500,.1); alert('Сброшено.');
+});
+
+/* ================================================================
+   14. СТАРТ
+   ================================================================ */
+async function init(){
+  loadSettings(); applySettings();
+  currentModel = MODELS[settings.model] ? settings.model : 'auto';
+
+  renderFilters(); renderCatalog();
+  renderModels(); updateModelUI(); updateChatHeader(); renderQuick();
+
+  let saved = '';
+  try{ saved = localStorage.getItem('gamelab_code') || ''; }catch(e){}
+  ta.value = saved || GAME_CODE.cube3d();
+  updateModeBadge();
+
+  document.body.classList.remove('no-anim');
+
+  const splash = document.getElementById('splash');
+  if(!settings.welcomeSplash){
+    if(splash) splash.remove();
+    greet(); detectCountry();
+  } else {
+    detectCountry();
+    setTimeout(()=>{
+      if(splash) splash.classList.add('out');
+      setTimeout(async()=>{ if(splash) splash.remove(); await greet(); }, 700);
+    }, 2100);
+    setTimeout(()=>beep(880,.08), 300);
+    setTimeout(()=>beep(1170,.08), 500);
+  }
+}
+
+init();
+</script>
+</body>
+</html>
